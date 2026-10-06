@@ -2,9 +2,12 @@
 
 Website: [www.adhocdraw.com](https://www.adhocdraw.com)
 
-AdhocDraw is a free, private tool for quick diagrams, white boards and notebooks.
-It runs entirely in your browser: **your diagrams never leave your device**, there
-are no accounts, no tracking and no server that stores anything.
+AdhocDraw is a free tool for quick diagrams, white boards and notebooks that keeps
+your work on your device. It runs in your browser: **your diagrams never leave your
+device** - they are stored only in your browser and in files you save yourself, and
+are never sent to a server. There are no accounts, no cookies and no analytics or
+tracking. Like any website, the host (GitHub Pages) may keep standard server logs,
+such as IP addresses; the app itself cannot see or use them.
 
 The source code is being prepared for publication here.
 
