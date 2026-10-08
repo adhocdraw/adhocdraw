@@ -1,0 +1,42 @@
+{
+  "name": "adhocdraw-client",
+  "private": true,
+  "license": "Apache-2.0",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/check-privacy.mjs",
+    "lint": "oxlint",
+    "preview": "vite preview --port 4173 --strictPort",
+    "check:privacy": "node scripts/check-privacy.mjs",
+    "licenses": "node scripts/generate-licenses.mjs"
+  },
+  "dependencies": {
+    "@floating-ui/react": "^0.27.20",
+    "@msagl/core": "^1.1.24",
+    "@radix-ui/react-alert-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
+    "@radix-ui/react-toast": "^1.2.23",
+    "@xyflow/react": "^12.11.6",
+    "browser-fs-access": "^0.38.0",
+    "framer-motion": "^13.4.0",
+    "fuzzy": "^0.1.3",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "perfect-freehand": "^1.2.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  }
+}

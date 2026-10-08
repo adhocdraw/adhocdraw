@@ -1,0 +1,4637 @@
+/* Copyright 2026 Vikranth Pandiri
+ * SPDX-License-Identifier: Apache-2.0 */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 16px;
+}
+
+.canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.canvas-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 6px 16px;
+  border-bottom: 1px solid #ddd;
+  gap: 8px 16px;
+}
+
+
+.canvas-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-group > button,
+.canvas-header-meta > button,
+.canvas-header-actions .flyout-trigger {
+  padding: 5px 9px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.toolbar-group > button:hover,
+.canvas-header-meta > button:hover,
+.canvas-header-actions .flyout-trigger:hover {
+  background: #f0f0f5;
+}
+
+.shapes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shape-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+
+.shape-btn:hover {
+  background: #eaeaf2;
+}
+
+.shape-btn-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.save-status {
+  font-size: 12px;
+  margin-left: 8px;
+  color: #888;
+}
+
+.save-status-unsaved {
+  color: #d99a00;
+}
+
+.save-status-saving {
+  color: #5b6ee1;
+}
+
+.canvas-flow {
+  flex: 1;
+  position: relative;
+}
+
+.style-panel {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.style-panel label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+}
+
+.style-panel input[type="color"] {
+  width: 26px;
+  height: 26px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.style-panel input[type="number"] {
+  width: 50px;
+  padding: 3px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.react-flow__node.selected {
+  outline: 2px solid #5b6ee1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.text-format-toggles {
+  display: flex;
+  gap: 2px;
+}
+
+.text-toggle-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.text-toggle-btn.italic {
+  font-style: italic;
+}
+
+.text-toggle-btn.underline {
+  text-decoration: underline;
+}
+
+.text-toggle-btn.active {
+  background: #5b6ee1;
+  color: white;
+  border-color: #5b6ee1;
+}
+
+.style-panel select {
+  padding: 3px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.style-panel input[type="text"] {
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 110px;
+}
+
+.grid-snap-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.alignment-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.freehand-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+
+.guide-line {
+  position: absolute;
+  background: #ff4d6d;
+}
+
+.guide-vertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.guide-horizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.context-menu {
+  /* position set inline by @radix-ui/react-dropdown-menu's Popper */
+  z-index: 20;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.context-menu [role="menuitem"] {
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+/* data-highlighted covers both mouse hover and keyboard arrow-key
+   navigation - Radix sets it for whichever item is currently active
+   regardless of input method, unlike a plain :hover rule. */
+.context-menu [role="menuitem"][data-highlighted] {
+  background: #eaeaf2;
+}
+
+.context-menu [role="menuitem"][data-disabled] {
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+.edge-label-wrapper {
+  position: absolute;
+  pointer-events: all;
+}
+
+.edge-label-text {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #333;
+  cursor: text;
+  white-space: nowrap;
+}
+
+.edge-label-input {
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid #5b6ee1;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Sticky note node */
+.sticky-note {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.sticky-note-swatches {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sticky-note-text {
+  white-space: pre-wrap;
+  font-size: 10px;
+  flex: 1;
+  overflow: auto;
+}
+
+.sticky-note-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 10px;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Text node */
+.text-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.text-node-text {
+  font-size: 10px;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.text-node-textarea {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed #999;
+  background: transparent;
+  resize: none;
+  font-size: 10px;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Shape node */
+.shape-node-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.shape-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.4px solid #6b7fd7;
+  padding: 4px;
+  /* Not clipped - ShapeNode.tsx measures this container's natural content
+     height and grows the node's own height to match, so long text is never
+     actually cut off or scrolled; this overflow:hidden is only a one-frame
+     safety net for the instant before that measurement runs. */
+  overflow: hidden;
+}
+
+.shape-node-text {
+  text-align: center;
+  font-size: 10px;
+  white-space: pre-wrap;
+}
+
+.shape-node-svg {
+  border: none;
+  padding: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shape-svg {
+  width: 100%;
+  flex: 1 1 0px;
+  /* An explicit zero height keeps the icon's own aspect ratio out of the
+     auto-grow measurement - it counts as just its min-height there. */
+  height: 0;
+  /* A positive min-height (rather than 0) keeps the drawn shape at a normal,
+     recognizable size instead of being squeezed away to nothing as the
+     label below grows - ShapeNode.tsx grows the whole node's height to fit
+     the label rather than shrinking the icon past this floor. */
+  min-height: 24px;
+}
+
+.shape-node-svg-label {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0 4px 4px;
+}
+
+.shape-node-textarea {
+  width: 90%;
+  height: 70%;
+  border: none;
+  background: transparent;
+  resize: none;
+  text-align: center;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Frame node */
+.frame-node {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.frame-node-label {
+  position: absolute;
+  top: -12px;
+  left: 12px;
+  background: #f7f7fa;
+  padding: 0 6px;
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+.frame-node-label input {
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+/* Connection handles: hidden until hover/drag, then easy to grab */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #5b6ee1;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #5b6ee1;
+  opacity: 0;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.react-flow__node:hover .react-flow__handle,
+.react-flow__handle.connectingfrom,
+.react-flow__handle.connectingto,
+.react-flow__handle.valid {
+  opacity: 1;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.4);
+}
+
+/* Shapes panel search */
+.shapes-search {
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.shapes-empty {
+  color: #888;
+  font-size: 13px;
+  padding: 8px 2px;
+}
+
+/* Keyboard shortcuts help panel */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcuts-panel {
+  background: white;
+  border-radius: 10px;
+  padding: 20px 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  color: #888;
+}
+
+.shortcuts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shortcuts-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  gap: 12px;
+}
+
+.shortcuts-list kbd {
+  background: #f0f0f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Version history panel */
+.save-version-btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #5b6ee1;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+
+.save-version-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.version-empty {
+  color: #888;
+  font-size: 13px;
+}
+
+.version-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.version-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  gap: 10px;
+}
+
+.version-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.version-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.version-list li button {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.version-list li button:hover {
+  background: #f0f0f5;
+}
+
+/* Page tabs (multi-page diagrams) */
+.page-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border-bottom: 1px solid #ddd;
+  overflow-x: auto;
+}
+
+.page-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.page-tab:not(.active):hover {
+  background: #f0f0f5;
+}
+
+.page-tab.active {
+  background: #eaeaf2;
+  border-color: #ddd;
+  border-bottom-color: transparent;
+  font-weight: 600;
+}
+
+.page-tab input {
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 90px;
+}
+
+.page-tab-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.page-tab-close:hover {
+  color: #ff6b6b;
+}
+
+.page-tab-add {
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: #555;
+}
+
+/* Dark mode */
+.app.dark {
+  background: #1a1a22;
+}
+
+.app.dark .shapes-search,
+.app.dark .flyout-input {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .shape-btn,
+.app.dark .pencil-btn,
+.app.dark .select-mode-btn {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .shape-btn:hover,
+.app.dark .pencil-btn:hover,
+.app.dark .select-mode-btn:hover {
+  background: #33334a;
+}
+
+.app.dark .canvas-area {
+  background: #1a1a22;
+}
+
+.app.dark .canvas-header,
+.app.dark .page-tabs {
+  background: #20202b;
+  border-bottom-color: #333;
+}
+
+
+.app.dark .toolbar-group > button,
+.app.dark .canvas-header-meta > button,
+.app.dark .canvas-header-actions .flyout-trigger {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .react-flow {
+  background-color: #16161d;
+}
+
+.app.dark .style-panel,
+.app.dark .edge-style-panel,
+.app.dark .context-menu,
+.app.dark .edge-label-text,
+.app.dark .shortcuts-panel {
+  background: #23232e;
+  color: #eee;
+  border-color: #444;
+}
+
+.app.dark .shortcuts-list li,
+.app.dark .version-list li {
+  border-bottom-color: #333;
+}
+
+.app.dark .version-list li button {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .shortcuts-list kbd {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .context-menu button {
+  color: #eee;
+}
+
+.app.dark .context-menu button:hover:not(:disabled) {
+  background: #33334a;
+}
+
+.app.dark .empty-state {
+  color: #888;
+  background: #1a1a22;
+}
+
+.app.dark .page-tab:not(.active):hover {
+  background: #2a2a36;
+}
+
+.app.dark .page-tab.active {
+  background: #2f2f3d;
+  border-color: #444;
+}
+
+/* Pencil tool */
+.pencil-btn,
+.select-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.toolbar-group > .pencil-btn,
+.toolbar-group > .select-mode-btn {
+  margin-bottom: 0;
+  gap: 4px;
+}
+
+.pencil-btn:hover,
+.select-mode-btn:hover {
+  background: #eaeaf2;
+}
+
+.pencil-btn.active,
+.select-mode-btn.active {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+  color: white;
+}
+
+.custom-shape-input {
+  display: none;
+}
+
+.custom-shape-upload-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.custom-shape-upload-btn:hover {
+  background: #eaeaf2;
+}
+
+.shape-btn-custom-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.app.dark .custom-shape-upload-btn {
+  background: #23232e;
+  border-color: #444;
+  color: #eee;
+}
+
+.canvas-flow-drawing {
+  cursor: crosshair;
+}
+
+.canvas-flow-drawing .react-flow__pane {
+  cursor: crosshair;
+}
+
+.canvas-flow-selecting,
+.canvas-flow-selecting .react-flow__pane {
+  cursor: default;
+}
+
+/* Image node */
+.image-node-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image-node-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Freehand node */
+.freehand-node-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.freehand-node-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Node lock badge */
+.node-lock-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 13px;
+  background: white;
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  z-index: 3;
+  line-height: 1;
+}
+
+/* Comment badge and popover */
+.comment-badge {
+  position: absolute;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #ffd76a;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.comment-popover {
+  /* position/top/left set inline by @floating-ui/react (useNodeAnchoredFloating) */
+  z-index: 7;
+}
+
+.comment-popover textarea {
+  width: 200px;
+  height: 90px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: both;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Edge waypoints */
+.edge-waypoint {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #5b6ee1;
+  cursor: move;
+  pointer-events: all;
+}
+
+.edge-midpoint {
+  fill: rgba(255, 255, 255, 0.7);
+  stroke: #5b6ee1;
+  stroke-width: 1.5;
+  cursor: move;
+  pointer-events: all;
+}
+
+.app.dark .comment-popover textarea {
+  background: #23232e;
+  color: #eee;
+  border-color: #444;
+}
+
+.app.dark .node-lock-badge {
+  background: #23232e;
+}
+
+/* Group node (invisible container, faint dashed outline only) */
+.group-node {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(91, 110, 225, 0.35);
+  border-radius: 4px;
+  background: transparent;
+}
+
+/* Swimlane node */
+.swimlane-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  position: relative;
+}
+
+.swimlane-node.swimlane-horizontal {
+  flex-direction: column;
+}
+
+.swimlane-lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid #e0e0e8;
+}
+
+.swimlane-horizontal .swimlane-lane {
+  border-right: none;
+  border-bottom: 1px solid #e0e0e8;
+}
+
+.swimlane-lane:last-child {
+  border-right: none;
+  border-bottom: none;
+}
+
+.swimlane-lane-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  background: #f7f7fa;
+  border-bottom: 1px solid #e0e0e8;
+  flex-shrink: 0;
+}
+
+.swimlane-lane-header input {
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 90%;
+  text-align: center;
+}
+
+.swimlane-lane-remove {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.swimlane-lane-remove:hover {
+  color: #ff6b6b;
+}
+
+.swimlane-lane-body {
+  flex: 1;
+}
+
+.swimlane-divider {
+  position: absolute;
+  z-index: 2;
+}
+
+.swimlane-divider-vertical {
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+  cursor: col-resize;
+}
+
+.swimlane-divider-horizontal {
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 6px;
+  cursor: row-resize;
+}
+
+.swimlane-add-lane {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  background: white;
+  font-size: 11px;
+  padding: 3px 6px;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.swimlane-auto-resize {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  z-index: 4;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.swimlane-auto-resize.active {
+  background: #5b6ee1;
+  color: white;
+  border-color: #5b6ee1;
+}
+
+/* Align / distribute toolbar */
+.align-panel {
+  position: absolute;
+  top: 64px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.align-panel button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.align-panel button:hover:not(:disabled) {
+  background: #eaeaf2;
+}
+
+.align-panel button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.align-panel-divider {
+  width: 1px;
+  height: 20px;
+  background: #ddd;
+  margin: 0 2px;
+}
+
+/* Find & Replace */
+.find-replace-panel {
+  position: absolute;
+  top: 64px;
+  right: 300px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  width: 260px;
+}
+
+.find-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.find-replace-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.find-replace-row button {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.find-replace-row button:hover:not(:disabled) {
+  background: #eaeaf2;
+}
+
+.find-replace-row button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.find-replace-count {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.find-replace-close {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.app.dark .swimlane-node {
+  background: #23232e;
+  border-color: #444;
+}
+
+.app.dark .swimlane-lane {
+  border-right-color: #3a3a46;
+}
+
+.app.dark .swimlane-horizontal .swimlane-lane {
+  border-bottom-color: #3a3a46;
+}
+
+.app.dark .swimlane-lane-header {
+  background: #2a2a36;
+  color: #ccc;
+  border-bottom-color: #3a3a46;
+}
+
+.app.dark .swimlane-add-lane,
+.app.dark .swimlane-auto-resize,
+.app.dark .align-panel,
+.app.dark .align-panel button,
+.app.dark .find-replace-panel,
+.app.dark .find-replace-row button {
+  background: #23232e;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .find-replace-row input {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+/* Table node */
+.table-node-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.table-node {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  border: 2px solid #6b7fd7;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+}
+
+.table-node-cell {
+  border: 1px solid #d8dcf0;
+  padding: 6px 8px;
+  font-size: 12px;
+  overflow: hidden;
+  word-break: break-word;
+  cursor: text;
+}
+
+.table-node-cell-input {
+  border: 1px solid #5b6ee1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.table-node-controls {
+  position: absolute;
+  bottom: -34px;
+  left: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.table-node-controls button {
+  font-size: 11px;
+  padding: 3px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.table-node-controls button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+/* UML class node */
+.uml-node-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.uml-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #6b7fd7;
+  border-radius: 4px;
+  background: white;
+  overflow: hidden;
+}
+
+.uml-node-title {
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #6b7fd7;
+  font-size: 13px;
+}
+
+.uml-node-attributes,
+.uml-node-methods {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: "SFMono-Regular", Menlo, monospace;
+  white-space: pre-wrap;
+  border-bottom: 1px solid #d8dcf0;
+  overflow: auto;
+}
+
+.uml-node-methods {
+  border-bottom: none;
+}
+
+.uml-node-textarea {
+  flex: 1;
+  border: 1px solid #5b6ee1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: "SFMono-Regular", Menlo, monospace;
+  resize: none;
+  width: 100%;
+}
+
+.app.dark .table-node,
+.app.dark .uml-node {
+  background: #23232e;
+}
+
+.app.dark .table-node-cell {
+  border-color: #3a3a46;
+  color: #eee;
+}
+
+.app.dark .table-node-controls button {
+  background: #23232e;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .uml-node-attributes,
+.app.dark .uml-node-methods {
+  border-color: #3a3a46;
+  color: #eee;
+}
+
+/* Hyperlinks */
+.link-badge {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 11px;
+  z-index: 4;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.link-popover {
+  /* position/top/left set inline by @floating-ui/react (useNodeAnchoredFloating) */
+  z-index: 6;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.link-popover label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-right: 10px;
+}
+
+.link-popover input[type="text"],
+.link-popover select {
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.link-popover-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.link-popover-actions button {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Data panel */
+.data-panel {
+  /* position/top/left set inline by @floating-ui/react (useNodeAnchoredFloating) */
+  z-index: 7;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  width: 260px;
+}
+
+.data-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.data-panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.data-panel-close {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.data-panel-field-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.data-panel-field-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.data-panel-field-row button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #999;
+}
+
+.data-panel-add-field {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  width: 100%;
+}
+
+.data-panel-rule {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.data-panel-rule h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.data-panel-rule-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.data-panel-rule-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.data-panel-rule-row select {
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.data-panel-clear-rule {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Presentation mode */
+.canvas-area.presenting .canvas-header,
+.canvas-area.presenting .diagram-tabs-wrap,
+.canvas-area.presenting .page-tabs {
+  display: none;
+}
+
+.canvas-area.presenting {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: white;
+}
+
+.canvas-area.presenting .canvas-flow {
+  height: 100vh;
+}
+
+.presentation-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 999px;
+}
+
+.presentation-controls button {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.presentation-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.presentation-exit {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.presentation-page-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  background: white;
+  pointer-events: none;
+}
+
+.app.dark .presentation-page-transition {
+  background: #16161d;
+}
+
+.presentation-page-indicator {
+  font-size: 13px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.app.dark .link-popover,
+.app.dark .link-badge,
+.app.dark .data-panel {
+  background: #23232e;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .link-popover input[type="text"],
+.app.dark .link-popover select,
+.app.dark .data-panel-field-row input,
+.app.dark .data-panel-rule-row input[type="text"] {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .link-popover-actions button,
+.app.dark .data-panel-add-field,
+.app.dark .data-panel-clear-rule {
+  background: #23232e;
+  border-color: #444;
+  color: #eee;
+}
+
+.app.dark .canvas-area.presenting {
+  background: #16161d;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 60;
+}
+
+.confirm-dialog-overlay[data-state="open"] {
+  animation: confirm-dialog-fade-in 150ms ease-out;
+}
+
+.confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 10px;
+  padding: 20px 24px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 61;
+}
+
+.confirm-dialog[data-state="open"] {
+  animation: confirm-dialog-scale-in 150ms ease-out;
+}
+
+.confirm-dialog-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.confirm-dialog-description {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #555;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-dialog-cancel,
+.confirm-dialog-confirm {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.confirm-dialog-confirm {
+  background: #d33;
+  border-color: #d33;
+  color: white;
+}
+
+@keyframes confirm-dialog-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confirm-dialog-scale-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.app.dark .confirm-dialog {
+  background: #23232e;
+  color: #eee;
+}
+
+.app.dark .confirm-dialog-description {
+  color: #bbb;
+}
+
+.app.dark .confirm-dialog-cancel {
+  background: #2a2a36;
+  border-color: #444;
+  color: #eee;
+}
+
+.app-toast-viewport {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-toast {
+  background: #23232e;
+  color: #eee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.app-toast[data-state="open"] {
+  animation: app-toast-slide-in 150ms ease-out;
+}
+
+.app-toast[data-state="closed"] {
+  animation: confirm-dialog-fade-in 150ms ease-in reverse;
+}
+
+@keyframes app-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.app-toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.app-toast-close:hover {
+  opacity: 1;
+}
+
+/* Endpoint dots on a selected edge - drag one onto another shape's handle to
+   re-attach that end of the arrow there. Hidden on unselected edges so they
+   don't clutter the canvas, though still grabbable via reconnectRadius. */
+.react-flow__edge .react-flow__edgeupdater {
+  fill: transparent;
+  stroke: transparent;
+  cursor: grab;
+}
+
+
+.edge-end-dot {
+  fill: #fff;
+  stroke: #5b6ee1;
+  stroke-width: 1.5;
+}
+
+/* Toolbar flyouts (New, Export) */
+.flyout {
+  position: relative;
+}
+
+.flyout-trigger.open {
+  background: #eaeaf2;
+}
+
+.flyout-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 220px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f7f7fa;
+  color: #222;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shapes-flyout {
+  width: 260px;
+}
+
+.flyout-input {
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 4px;
+}
+
+.flyout-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  margin: 4px 2px 0;
+}
+
+.flyout-item {
+  text-align: left;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: inherit;
+}
+
+.flyout-item:hover {
+  background: #eaeaf2;
+}
+
+.flyout-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 4px 0;
+}
+
+.shapes-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.app.dark .flyout-panel {
+  background: #23232e;
+  color: #eee;
+  border-color: #333;
+}
+
+.app.dark .flyout-trigger.open,
+.app.dark .flyout-item:hover {
+  background: #2f2f3d;
+}
+
+.app.dark .flyout-divider {
+  background: #333;
+}
+
+/* Diagram tabs (every saved diagram, one tab each) */
+.diagram-tabs-wrap {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.diagram-tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  /* Bottom padding leaves a gutter under the tabs for the thin scrollbar,
+     so it never draws on top of them. */
+  padding: 6px 4px 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b9bed8 transparent;
+}
+
+.app.dark .diagram-tabs {
+  scrollbar-color: #555570 transparent;
+}
+
+.diagram-tabs-arrow {
+  align-self: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 26px;
+  margin: 0 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.diagram-tabs-arrow:hover:not(:disabled) {
+  background: #e4e4ee;
+}
+
+.diagram-tabs-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.app.dark .diagram-tabs-arrow:hover:not(:disabled) {
+  background: #33334a;
+}
+
+.diagram-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  padding: 6px 10px;
+  background: #eceef6;
+  border: 1px solid #d3d7e6;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.diagram-tab:not(.active):hover {
+  background: #dfe3f3;
+  border-color: #b9c0e0;
+}
+
+.diagram-tab.active {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+  color: white;
+  font-weight: 600;
+}
+
+.diagram-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diagram-tab-close {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.diagram-tab-close:hover {
+  opacity: 1;
+  color: #ff6b6b;
+}
+
+.app.dark .diagram-tabs-wrap {
+  border-bottom-color: #333;
+}
+
+.app.dark .diagram-tab {
+  background: #2a2a36;
+  border-color: #3d3d50;
+}
+
+.app.dark .diagram-tab:not(.active):hover {
+  background: #353548;
+  border-color: #555570;
+}
+
+.app.dark .diagram-tab.active {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+}
+
+.app.dark .diagram-tab {
+  color: #ddd;
+}
+
+.app.dark .diagram-tab.active {
+  color: white;
+}
+
+.shapes-hint {
+  font-size: 12px;
+  color: #888;
+  margin: -6px 0 8px;
+}
+
+.diagram-tab-unsaved {
+  color: #d99a00;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.diagram-tab.active .diagram-tab-unsaved {
+  color: #ffd866;
+}
+
+/* Toolbar icons */
+.toolbar-icon {
+  flex-shrink: 0;
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
+.toolbar-group > button,
+.canvas-header-actions .flyout-trigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbar-group > .pencil-btn,
+.toolbar-group > .select-mode-btn {
+  gap: 0;
+}
+
+.canvas-header-actions .grid-snap-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.flyout-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Draggable floating panels (zoom controls, text style) */
+.panel-grip {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  color: #999;
+  line-height: 1;
+}
+
+.panel-grip:active {
+  cursor: grabbing;
+}
+
+.style-panel > .panel-grip {
+  font-size: 16px;
+  margin-right: -4px;
+}
+
+.react-flow__controls > .panel-grip {
+  width: 10px;
+  align-self: stretch;
+  flex: none;
+  order: -1;
+  background: repeating-linear-gradient(0deg, #bbb 0 2px, transparent 2px 5px) center / 2px 70% no-repeat;
+}
+
+.app.dark .panel-grip {
+  color: #777;
+}
+
+/* Shapes & Widgets dock (floating, left of the canvas) */
+.shapes-dock {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 6;
+  width: 250px;
+  max-height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  background: #f7f7fa;
+  color: #222;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.shapes-dock-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.shapes-dock.collapsed .shapes-dock-header {
+  border-bottom: none;
+}
+
+.shapes-dock-collapse {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 3px 4px;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.shapes-dock-collapse:hover {
+  background: #e4e4ee;
+}
+
+.shapes-dock-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shapes-dock-chevron {
+  display: inline-flex;
+  transition: transform 0.15s;
+}
+
+.shapes-dock-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.shapes-dock-chevron .toolbar-icon {
+  margin-right: 0;
+  vertical-align: middle;
+}
+
+.shapes-dock-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: inherit;
+}
+
+.shapes-dock-btn:hover {
+  background: #e4e4ee;
+}
+
+.shapes-dock-close:hover {
+  color: #ff6b6b;
+}
+
+.shapes-dock-body {
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.toolbar-group > .shapes-toggle.active {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+  color: white;
+}
+
+.app.dark .shapes-dock {
+  background: #23232e;
+  color: #eee;
+  border-color: #333;
+}
+
+.app.dark .shapes-dock-header {
+  border-bottom-color: #333;
+}
+
+.app.dark .shapes-dock-btn:hover,
+.app.dark .shapes-dock-collapse:hover {
+  background: #33334a;
+}
+
+/* ---- Three distinct bars: toolbar, diagram tabs, page tabs ---- */
+
+/* 1. Toolbar: the brightest, raised surface */
+.canvas-header {
+  background: #ffffff;
+  border-bottom: 1px solid #cfd3e3;
+  box-shadow: 0 2px 6px rgba(40, 50, 90, 0.08);
+  position: relative;
+  z-index: 20;
+}
+
+/* 2. Diagram tabs: a darker tinted band the tabs sit on */
+.diagram-tabs-wrap {
+  background: #dfe3f2;
+  border-bottom: 2px solid #5b6ee1;
+}
+
+.diagram-tab {
+  background: #f3f4fa;
+  border-color: #c3c9e0;
+}
+
+.diagram-tab:not(.active):hover {
+  background: #ffffff;
+}
+
+/* 3. Page tabs: a lighter, flatter strip with small pill tabs */
+.page-tabs {
+  background: #f7f8fc;
+  border-bottom: 1px solid #dcdfec;
+  padding: 5px 0;
+  gap: 6px;
+}
+
+.page-tab {
+  border-radius: 14px;
+  padding: 3px 10px;
+  background: #ffffff;
+  border: 1px solid #d8dcec;
+  font-size: 12px;
+}
+
+.page-tab:not(.active):hover {
+  background: #eef0fb;
+}
+
+.page-tab.active {
+  background: #ffffff;
+  border: 1px solid #5b6ee1;
+  box-shadow: inset 0 -2px 0 #5b6ee1;
+  color: #3d4fc4;
+  font-weight: 600;
+}
+
+.page-tab-add {
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* Dark */
+.app.dark .canvas-header {
+  background: #272735;
+  border-bottom-color: #3a3a4c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.app.dark .diagram-tabs-wrap {
+  background: #14141b;
+  border-bottom: 2px solid #5b6ee1;
+}
+
+.app.dark .diagram-tab {
+  background: #262633;
+  border-color: #3d3d50;
+}
+
+.app.dark .diagram-tab:not(.active):hover {
+  background: #323246;
+}
+
+.app.dark .diagram-tab.active {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+}
+
+.app.dark .page-tabs {
+  background: #1d1d28;
+  border-bottom-color: #2e2e3d;
+}
+
+.app.dark .page-tab {
+  background: #262633;
+  border-color: #3a3a4c;
+}
+
+.app.dark .page-tab:not(.active):hover {
+  background: #30303f;
+}
+
+.app.dark .page-tab.active {
+  background: #262633;
+  border-color: #7d8cf0;
+  box-shadow: inset 0 -2px 0 #7d8cf0;
+  color: #b5beff;
+}
+
+/* Focus / hover must never wash out the selected tab. */
+.diagram-tab.active,
+.diagram-tab.active:hover,
+.diagram-tab.active:focus-within {
+  background: #5b6ee1;
+  color: white;
+}
+
+.diagram-tab:focus-within {
+  outline: 2px solid rgba(91, 110, 225, 0.55);
+  outline-offset: -2px;
+}
+
+/* About & privacy dialog */
+.about-panel {
+  max-width: 560px;
+}
+
+.about-body {
+  padding: 4px 4px 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.about-body ul {
+  padding-left: 20px;
+  margin: 8px 0 12px;
+}
+
+.about-body li {
+  margin-bottom: 6px;
+}
+
+.about-lead {
+  font-size: 15px;
+  margin-top: 0;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.about-links a {
+  color: #5b6ee1;
+}
+
+.about-body p {
+  margin: 0 0 10px;
+}
+
+/* First header row: diagram name on the left, app-level buttons on the right */
+.canvas-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 34px;
+}
+
+.canvas-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.canvas-header-meta > button {
+  display: inline-flex;
+  align-items: center;
+}
+
+.diagram-tab-input {
+  font: inherit;
+  width: 150px;
+  padding: 1px 4px;
+  border: 1px solid #5b6ee1;
+  border-radius: 4px;
+  outline: none;
+  background: #fff;
+  color: #222;
+}
+
+.app.dark .diagram-tab-input {
+  background: #1a1a22;
+  color: #eee;
+}
+
+/* Save to file: gently flags a diagram whose work is not in a file yet */
+.toolbar-group > .save-file-btn.needs-save {
+  position: relative;
+  border-color: #5b6ee1;
+  box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25);
+  animation: save-file-attention 1.4s ease-out 1;
+}
+
+.save-file-btn.needs-save::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e8a317;
+  border: 1px solid #fff;
+}
+
+.toolbar-group > .save-file-btn.needs-save.nudge {
+  animation: save-file-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes save-file-attention {
+  0% { box-shadow: 0 0 0 0 rgba(91, 110, 225, 0.6); }
+  100% { box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25); }
+}
+
+@keyframes save-file-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25); }
+  50% { box-shadow: 0 0 0 7px rgba(91, 110, 225, 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-group > .save-file-btn.needs-save,
+  .toolbar-group > .save-file-btn.needs-save.nudge {
+    animation: none;
+  }
+}
+
+/* Save to file: gently flags a diagram whose work is not in a file yet */
+.toolbar-group > .save-file-btn.needs-save {
+  position: relative;
+  border-color: #5b6ee1;
+  box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25);
+  animation: save-file-attention 1.4s ease-out 1;
+}
+
+.save-file-btn.needs-save::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e8a317;
+  border: 1px solid #fff;
+}
+
+.toolbar-group > .save-file-btn.needs-save.nudge {
+  animation: save-file-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes save-file-attention {
+  0% { box-shadow: 0 0 0 0 rgba(91, 110, 225, 0.6); }
+  100% { box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25); }
+}
+
+@keyframes save-file-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(91, 110, 225, 0.25); }
+  50% { box-shadow: 0 0 0 7px rgba(91, 110, 225, 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-group > .save-file-btn.needs-save,
+  .toolbar-group > .save-file-btn.needs-save.nudge {
+    animation: none;
+  }
+}
+
+/* Pencil options panel (shown while the Pencil tool is on) */
+.pencil-panel {
+  gap: 12px;
+}
+
+.pencil-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.pencil-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.pencil-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #5b6ee1;
+}
+
+.pencil-panel input[type="range"] {
+  width: 90px;
+}
+
+.pencil-value {
+  min-width: 34px;
+  font-size: 12px;
+  color: #666;
+}
+
+.app.dark .pencil-value {
+  color: #aaa;
+}
+
+/* Preset color swatches (style panel, pencil panel) */
+.color-swatches {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.color-swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.color-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #5b6ee1;
+}
+
+.pencil-hint {
+  font-size: 12px;
+  color: #5b6ee1;
+  white-space: nowrap;
+}
+
+.style-panel {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100% - 24px);
+}
+
+/* Space held in pencil mode: the pointer is a hand until released */
+.canvas-flow-panning,
+.canvas-flow-panning .react-flow__pane {
+  cursor: grab;
+}
+
+/* Quick tooltips (see Tooltips.tsx) */
+.app-tooltip {
+  position: fixed;
+  z-index: 5000;
+  max-width: 280px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #23232e;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: app-tooltip-in 0.08s ease-out;
+}
+
+@keyframes app-tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Toggled-on toolbar buttons (Pencil, Select, Shapes) keep their blue in every
+   state - hover and focus used to wash them out to the plain button color, and
+   in dark mode the plain dark button style overrode the blue entirely. */
+.toolbar-group > .pencil-btn.active,
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .pencil-btn.active:focus-visible,
+.toolbar-group > .select-mode-btn.active,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .select-mode-btn.active:focus-visible,
+.toolbar-group > .shapes-toggle.active,
+.toolbar-group > .shapes-toggle.active:hover,
+.toolbar-group > .shapes-toggle.active:focus-visible,
+.app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .pencil-btn.active:hover,
+.app.dark .toolbar-group > .select-mode-btn.active,
+.app.dark .toolbar-group > .select-mode-btn.active:hover,
+.app.dark .toolbar-group > .shapes-toggle.active,
+.app.dark .toolbar-group > .shapes-toggle.active:hover {
+  background: #5b6ee1;
+  border-color: #5b6ee1;
+  color: #fff;
+}
+
+/* A little lighter on hover, so it still reacts to the pointer. */
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .shapes-toggle.active:hover {
+  background: #4a5dd0;
+}
+
+/* =====================================================================
+   UI refresh: clearer buttons, grouped toolbar, stronger tabs
+   ===================================================================== */
+
+.app {
+  --ui-accent: #4f5fe0;
+  --ui-accent-strong: #3f4ec9;
+  --ui-accent-soft: #e8ebff;
+  --ui-border: #aeb6d9;
+  --ui-border-soft: #d4d9ee;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f3f5fc;
+  --ui-text: #20243a;
+  --ui-muted: #6a7090;
+  --ui-shadow: 0 1px 2px rgba(30, 40, 90, 0.12), 0 2px 6px rgba(30, 40, 90, 0.08);
+  --ui-radius: 9px;
+}
+
+.app.dark {
+  --ui-accent: #7081ff;
+  --ui-accent-strong: #8a99ff;
+  --ui-accent-soft: #2b2f55;
+  --ui-border: #4b5078;
+  --ui-border-soft: #343852;
+  --ui-surface: #2a2d42;
+  --ui-surface-2: #20222f;
+  --ui-text: #e8eaf8;
+  --ui-muted: #9aa0c4;
+  --ui-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- header: two rows, brighter surface ---- */
+.canvas-header {
+  gap: 10px;
+  padding: 10px 18px 12px;
+  background: var(--ui-surface);
+  border-bottom: 1px solid var(--ui-border-soft);
+  box-shadow: 0 3px 10px rgba(30, 40, 90, 0.08);
+}
+
+.app.dark .canvas-header {
+  background: #23253a;
+}
+
+
+
+
+/* ---- toolbar groups ---- */
+.canvas-header-actions {
+  gap: 10px;
+  align-items: center;
+}
+
+.toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--ui-surface-2);
+  border: 1.5px solid var(--ui-border-soft);
+  border-radius: 12px;
+}
+
+.toolbar-sep {
+  align-self: stretch;
+  width: 2px;
+  margin: 2px 2px;
+  border-radius: 2px;
+  background: var(--ui-border-soft);
+}
+
+/* ---- buttons ---- */
+.toolbar-group > button,
+.toolbar-group > .flyout > .flyout-trigger,
+.toolbar-group > .grid-snap-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s, transform 0.06s;
+}
+
+.toolbar-group > button:hover:not(.active):not(.needs-save),
+.toolbar-group > .flyout > .flyout-trigger:hover,
+.toolbar-group > .grid-snap-toggle:hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+.toolbar-group > button:active,
+.toolbar-group > .flyout > .flyout-trigger:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.toolbar-group > button:focus-visible,
+.toolbar-group > .flyout > .flyout-trigger:focus-visible {
+  outline: 3px solid rgba(79, 95, 224, 0.35);
+  outline-offset: 1px;
+}
+
+.toolbar-group .toolbar-icon {
+  margin-right: 0;
+  vertical-align: middle;
+  color: var(--ui-accent);
+}
+
+.toolbar-group .toolbar-icon {
+  stroke-width: 2.2;
+}
+
+.toolbar-group > .grid-snap-toggle {
+  color: var(--ui-text);
+  font-weight: 600;
+}
+
+/* a toggled-on tool: solid accent */
+.toolbar-group > .pencil-btn.active,
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .select-mode-btn.active,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .shapes-toggle.active,
+.toolbar-group > .shapes-toggle.active:hover,
+.app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .select-mode-btn.active,
+.app.dark .toolbar-group > .shapes-toggle.active {
+  color: #fff;
+  background: var(--ui-accent);
+  border-color: var(--ui-accent-strong);
+  box-shadow: 0 2px 8px rgba(79, 95, 224, 0.45);
+}
+
+.toolbar-group > .pencil-btn.active .toolbar-icon,
+.toolbar-group > .select-mode-btn.active .toolbar-icon,
+.toolbar-group > .shapes-toggle.active .toolbar-icon {
+  color: #fff;
+}
+
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .shapes-toggle.active:hover {
+  background: var(--ui-accent-strong);
+}
+
+/* the file action to keep an eye on */
+.toolbar-group > .save-file-btn.needs-save {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+}
+
+.save-status {
+  margin-left: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.flyout-trigger.open {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+/* menus that drop down from the toolbar */
+.flyout-panel {
+  border: 1.5px solid var(--ui-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(30, 40, 90, 0.25);
+  background: var(--ui-surface);
+  padding: 8px;
+}
+
+.flyout-item {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 500;
+}
+
+.flyout-item:hover {
+  background: var(--ui-accent-soft);
+}
+
+/* ---- diagram tabs ---- */
+.diagram-tabs-wrap {
+  background: linear-gradient(#e3e7fb, #d9def6);
+  border-bottom: 3px solid var(--ui-accent);
+}
+
+.app.dark .diagram-tabs-wrap {
+  background: #181a28;
+  border-bottom-color: var(--ui-accent);
+}
+
+.diagram-tabs {
+  gap: 4px;
+  /* bottom padding = gutter for the thin scrollbar, so it never covers tabs */
+  padding: 8px 8px 12px;
+}
+
+.diagram-tab {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -1px 3px rgba(30, 40, 90, 0.1);
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.diagram-tab:not(.active):hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+.diagram-tab.active,
+.diagram-tab.active:hover,
+.diagram-tab.active:focus-within {
+  color: #fff;
+  background: linear-gradient(#5d6cf0, var(--ui-accent));
+  border-color: var(--ui-accent-strong);
+  box-shadow: 0 -2px 6px rgba(79, 95, 224, 0.4);
+}
+
+.app.dark .diagram-tab {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+.app.dark .diagram-tab.active {
+  color: #fff;
+}
+
+.diagram-tabs-arrow {
+  color: var(--ui-accent);
+  font-weight: 700;
+}
+
+/* ---- page tabs ---- */
+.page-tabs {
+  padding: 8px 16px;
+  gap: 8px;
+  background: var(--ui-surface-2);
+  border-bottom: 1.5px solid var(--ui-border-soft);
+}
+
+.page-tab {
+  padding: 4px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(30, 40, 90, 0.1);
+}
+
+.page-tab:not(.active):hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+.page-tab.active {
+  color: var(--ui-accent-strong);
+  background: var(--ui-accent-soft);
+  border: 1.5px solid var(--ui-accent);
+  box-shadow: 0 0 0 2px rgba(79, 95, 224, 0.18);
+}
+
+.app.dark .page-tab.active {
+  color: #c9d0ff;
+}
+
+.page-tab-add {
+  padding: 4px 12px;
+  font-weight: 600;
+  color: var(--ui-accent);
+  border: 1.5px dashed var(--ui-accent);
+  border-radius: 999px;
+  background: transparent;
+}
+
+.page-tab-add:hover {
+  background: var(--ui-accent-soft);
+}
+
+/* ---- floating panels ---- */
+.style-panel,
+.shapes-dock {
+  border: 1.5px solid var(--ui-border);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: 0 4px 16px rgba(30, 40, 90, 0.18);
+}
+
+.shapes-dock-header {
+  background: var(--ui-surface-2);
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1.5px solid var(--ui-border-soft);
+}
+
+.shape-btn {
+  border: 1.5px solid var(--ui-border-soft);
+  border-radius: 9px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font-weight: 500;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.shape-btn:hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+.app.dark .shape-btn {
+  background: var(--ui-surface);
+  border-color: var(--ui-border-soft);
+  color: var(--ui-text);
+}
+
+.app.dark .shape-btn:hover {
+  background: var(--ui-accent-soft);
+}
+
+.app.dark .toolbar-group {
+  background: #1d1f2e;
+}
+
+.app.dark .toolbar-group > button,
+.app.dark .toolbar-group > .flyout > .flyout-trigger,
+.app.dark .toolbar-group > .grid-snap-toggle {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border-color: var(--ui-border);
+}
+
+.app.dark .toolbar-group > button:hover:not(.active):not(.needs-save),
+.app.dark .toolbar-group > .flyout > .flyout-trigger:hover {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+}
+
+.app.dark .page-tabs {
+  background: #1d1f2e;
+}
+
+.app.dark .page-tab {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+.app.dark .flyout-panel,
+.app.dark .style-panel,
+.app.dark .shapes-dock {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border-color: var(--ui-border);
+}
+
+.app.dark .shapes-dock-header {
+  background: #20222f;
+}
+
+.style-panel label,
+.app.dark .style-panel label {
+  color: var(--ui-text);
+}
+
+/* The panel is centered with left: 50%, which would otherwise cap its width at
+   half the canvas and wrap it into a tall block over the shapes; size it to its
+   contents instead (still never wider than the canvas). */
+.style-panel {
+  width: max-content;
+  max-width: calc(100% - 24px);
+  gap: 10px;
+  padding: 6px 12px;
+}
+
+.color-swatch {
+  width: 15px;
+  height: 15px;
+}
+
+/* =====================================================================
+   Color pass: a calmer neutral base, one hue per toolbar group, and icons
+   colored by what they do (instead of everything being blue)
+   ===================================================================== */
+
+.app {
+  --ui-accent: #5b6794;
+  --ui-accent-strong: #44507c;
+  --ui-accent-soft: #eceef7;
+  --ui-border: #aab0c6;
+  --ui-border-soft: #d6d9e6;
+  --ui-surface-2: #f5f6fa;
+}
+
+.app.dark {
+  --ui-accent: #8e9ac8;
+  --ui-accent-strong: #aab4dc;
+  --ui-accent-soft: #2c3048;
+}
+
+/* ---- group colors: File = teal, Draw = violet, View = amber ---- */
+.group-file { --grp: #0f9488; --grp-soft: #e3f6f3; }
+.group-draw { --grp: #7c4dff; --grp-soft: #efeaff; }
+.group-view { --grp: #d68a00; --grp-soft: #fff3d6; }
+.group-app  { --grp: #64708f; --grp-soft: #eef0f6; }
+
+.app.dark .group-file { --grp: #2dd4bf; --grp-soft: #123a37; }
+.app.dark .group-draw { --grp: #a78bfa; --grp-soft: #2a2250; }
+.app.dark .group-view { --grp: #fbbf24; --grp-soft: #3d3010; }
+.app.dark .group-app  { --grp: #94a0c0; --grp-soft: #262a3d; }
+
+.toolbar-cluster {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toolbar-caption {
+  padding-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.caption-file { color: #0b7a70; }
+.caption-draw { color: #6232e0; }
+.caption-view { color: #a56a00; }
+.app.dark .caption-file { color: #2dd4bf; }
+.app.dark .caption-draw { color: #a78bfa; }
+.app.dark .caption-view { color: #fbbf24; }
+
+.toolbar-group[class*="group-"] {
+  background: var(--grp-soft);
+  border: 2px solid var(--grp);
+}
+
+.toolbar-group[class*="group-"] > button,
+.toolbar-group[class*="group-"] > .flyout > .flyout-trigger,
+.toolbar-group[class*="group-"] > .grid-snap-toggle {
+  border-color: color-mix(in srgb, var(--grp) 55%, #98a0bd);
+}
+
+.toolbar-group[class*="group-"] > button:hover:not(.active):not(.needs-save),
+.toolbar-group[class*="group-"] > .flyout > .flyout-trigger:hover,
+.toolbar-group[class*="group-"] > .grid-snap-toggle:hover,
+.app.dark .toolbar-group[class*="group-"] > button:hover:not(.active):not(.needs-save),
+.app.dark .toolbar-group[class*="group-"] > .flyout > .flyout-trigger:hover {
+  background: var(--grp-soft);
+  border-color: var(--grp);
+}
+
+.toolbar-group[class*="group-"] > button:focus-visible,
+.toolbar-group[class*="group-"] > .flyout > .flyout-trigger:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--grp) 45%, transparent);
+}
+
+/* toggled-on tools take their group's color */
+.toolbar-group > .pencil-btn.active,
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .select-mode-btn.active,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .shapes-toggle.active,
+.toolbar-group > .shapes-toggle.active:hover,
+.app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .select-mode-btn.active,
+.app.dark .toolbar-group > .shapes-toggle.active {
+  background: var(--grp);
+  border-color: color-mix(in srgb, var(--grp) 70%, #000);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--grp) 50%, transparent);
+  color: #fff;
+}
+
+.app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .select-mode-btn.active,
+.app.dark .toolbar-group > .shapes-toggle.active {
+  color: #1a1330;
+}
+
+.toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .select-mode-btn.active:hover,
+.toolbar-group > .shapes-toggle.active:hover {
+  background: color-mix(in srgb, var(--grp) 85%, #000);
+}
+
+/* unsaved-work attention uses amber, not the base color */
+.toolbar-group > .save-file-btn.needs-save {
+  border-color: #d68a00;
+  background: #fff3d6;
+  box-shadow: 0 0 0 2px rgba(214, 138, 0, 0.3);
+}
+
+.app.dark .toolbar-group > .save-file-btn.needs-save {
+  background: #3d3010;
+  border-color: #fbbf24;
+}
+
+@keyframes save-file-attention {
+  0% { box-shadow: 0 0 0 0 rgba(214, 138, 0, 0.6); }
+  100% { box-shadow: 0 0 0 2px rgba(214, 138, 0, 0.3); }
+}
+
+@keyframes save-file-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(214, 138, 0, 0.3); }
+  50% { box-shadow: 0 0 0 7px rgba(214, 138, 0, 0.35); }
+}
+
+/* ---- icon colors by purpose ---- */
+.toolbar-group .icon-newDiagram { color: #16a34a; }   /* create: green */
+.toolbar-group .icon-folder     { color: #d97706; }   /* open: folder amber */
+.toolbar-group .icon-save       { color: #2563eb; }   /* save: classic floppy blue */
+.toolbar-group .icon-export     { color: #0d9488; }   /* export: teal */
+.toolbar-group .icon-shapes     { color: #7c3aed; }   /* shapes: violet */
+.toolbar-group .icon-select     { color: #475569; }   /* select: slate */
+.toolbar-group .icon-pencil     { color: #ea580c; }   /* pencil: orange */
+.toolbar-group .icon-grid       { color: #64748b; }   /* grid: grey */
+.toolbar-group .icon-history    { color: #b45309; }   /* history: brown */
+.toolbar-group .icon-search     { color: #0284c7; }   /* find: sky */
+.toolbar-group .icon-present    { color: #dc2626; }   /* present: red */
+.toolbar-group .icon-moon       { color: #6366f1; }   /* dark mode: indigo */
+.toolbar-group .icon-sun        { color: #f59e0b; }   /* light mode: sun yellow */
+.toolbar-group .icon-keyboard   { color: #475569; }
+.toolbar-group .icon-info       { color: #0ea5e9; }   /* about: info blue */
+
+.app.dark .toolbar-group .icon-newDiagram { color: #4ade80; }
+.app.dark .toolbar-group .icon-folder     { color: #fbbf24; }
+.app.dark .toolbar-group .icon-save       { color: #60a5fa; }
+.app.dark .toolbar-group .icon-export     { color: #2dd4bf; }
+.app.dark .toolbar-group .icon-shapes     { color: #a78bfa; }
+.app.dark .toolbar-group .icon-select     { color: #cbd5e1; }
+.app.dark .toolbar-group .icon-pencil     { color: #fb923c; }
+.app.dark .toolbar-group .icon-grid       { color: #94a3b8; }
+.app.dark .app.dark .toolbar-group .icon-history    { color: #fbbf24; }
+.app.dark .toolbar-group .icon-search     { color: #38bdf8; }
+.app.dark .toolbar-group .icon-present    { color: #f87171; }
+.app.dark .toolbar-group .icon-moon       { color: #a5b4fc; }
+.app.dark .toolbar-group .icon-keyboard   { color: #cbd5e1; }
+.app.dark .toolbar-group .icon-info       { color: #38bdf8; }
+
+/* a toggled-on tool is a solid color: its icon goes white (dark: dark) */
+.toolbar-group > .pencil-btn.active .toolbar-icon,
+.toolbar-group > .select-mode-btn.active .toolbar-icon,
+.toolbar-group > .shapes-toggle.active .toolbar-icon {
+  color: #fff;
+}
+
+.app.dark .toolbar-group > .pencil-btn.active .toolbar-icon,
+.app.dark .toolbar-group > .select-mode-btn.active .toolbar-icon,
+.app.dark .toolbar-group > .shapes-toggle.active .toolbar-icon {
+  color: #1a1330;
+}
+
+/* ---- diagram tabs: thin neutral line, calmer active tab ---- */
+.diagram-tabs-wrap {
+  background: linear-gradient(#eceef5, #e2e5ef);
+  border-bottom: 1px solid #b9bfd3;
+}
+
+.app.dark .diagram-tabs-wrap {
+  background: #181a28;
+  border-bottom: 1px solid #3a3f5c;
+}
+
+.diagram-tab.active,
+.diagram-tab.active:hover,
+.diagram-tab.active:focus-within {
+  background: linear-gradient(#454d70, #373e5c);
+  border-color: #2c3250;
+  box-shadow: 0 -2px 6px rgba(55, 62, 92, 0.35);
+}
+
+.diagram-tab:not(.active):hover {
+  background: #f2f4fa;
+  border-color: #7d86a8;
+}
+
+.app.dark .diagram-tab.active {
+  background: linear-gradient(#5a6390, #49517a);
+  border-color: #6d77a6;
+}
+
+.diagram-tabs-arrow {
+  color: #596080;
+}
+
+/* ---- page tabs: neutral, thin line ---- */
+.page-tabs {
+  border-bottom: 1px solid #c8cddf;
+}
+
+.page-tab.active {
+  color: #2d3350;
+  background: #fff;
+  border: 1.5px solid #6b7498;
+  box-shadow: 0 0 0 2px rgba(107, 116, 152, 0.18);
+}
+
+.app.dark .page-tab.active {
+  color: #e8eaf8;
+  background: #343855;
+  border-color: #8e9ac8;
+}
+
+.page-tab-add {
+  color: #596080;
+  border-color: #8d95b4;
+}
+
+.page-tab-add:hover {
+  background: #eceef7;
+}
+
+.save-status-saved {
+  color: #4b7f52;
+}
+
+
+.flyout-trigger.open {
+  background: var(--grp-soft, #eceef7);
+  border-color: var(--grp, #6b7498);
+}
+
+.flyout-item:hover {
+  background: #eceef7;
+}
+
+.app.dark .flyout-item:hover {
+  background: #2c3048;
+}
+
+/* =====================================================================
+   Theme: Palette (artist's palette). Applied with .theme-palette on .app;
+   works in light and dark. Chrome is the palette board, canvas is paper.
+   ===================================================================== */
+.app.theme-palette {
+  --pal-table: #d9c29a;
+  --pal-board: #f6ead3;
+  --pal-edge: #c9a874;
+  --pal-tab: #fbf3e2;
+  --pal-paper: #ffffff;
+  --pal-rim: #b88f56;
+  --pal-shadow: rgba(86, 56, 18, 0.3);
+  --ui-accent: #7c4dff;
+  --ui-accent-strong: #5f2fe0;
+  --ui-accent-soft: #efeaff;
+  --ui-border: #c9a874;
+  --ui-border-soft: #e2cfa8;
+  --ui-surface: var(--pal-tab);
+  --ui-surface-2: var(--pal-board);
+  --ui-text: #3a2a1b;
+  --ui-muted: #6a5540;
+  --ui-shadow: 0 2px 0 var(--pal-rim), 0 4px 8px var(--pal-shadow);
+  font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+
+.app.theme-palette.dark {
+  --pal-table: #16120f;
+  --pal-board: #30271f;
+  --pal-edge: #52422f;
+  --pal-tab: #3b3026;
+  --pal-paper: #23272f;
+  --pal-rim: #14100c;
+  --pal-shadow: rgba(0, 0, 0, 0.55);
+  --ui-accent: #9b7bff;
+  --ui-accent-strong: #b6a0ff;
+  --ui-accent-soft: #3a2f5c;
+  --ui-border: #52422f;
+  --ui-border-soft: #433527;
+  --ui-text: #f3e8d6;
+  --ui-muted: #c4b39a;
+}
+
+.app.theme-palette .group-file { --grp: #0f9488; }
+.app.theme-palette .group-draw { --grp: #7c4dff; }
+.app.theme-palette .group-view { --grp: #d68a00; }
+.app.theme-palette .group-app  { --grp: #64708f; }
+.app.theme-palette.dark .group-file { --grp: #22c3b3; }
+.app.theme-palette.dark .group-draw { --grp: #9b7bff; }
+.app.theme-palette.dark .group-view { --grp: #f0a928; }
+.app.theme-palette.dark .group-app  { --grp: #8a97b8; }
+
+.app.theme-palette .canvas-area,
+.app.theme-palette.dark .canvas-area {
+  background: radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--pal-table) 85%, #fff), var(--pal-table) 70%);
+  padding: 0 14px 14px;
+}
+
+/* ---- the palette board (header) ---- */
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header {
+  margin-top: 12px;
+  padding: 14px 34px 16px;
+  background: radial-gradient(ellipse at 18% 0%, color-mix(in srgb, var(--pal-board) 82%, #fff), var(--pal-board) 60%);
+  border: 0;
+  border-radius: 70px 56px 80px 50px / 54px 48px 72px 50px;
+  box-shadow: inset 0 0 0 3px var(--pal-edge), 0 12px 22px var(--pal-shadow);
+  position: relative;
+  z-index: 2;
+}
+
+
+.app.theme-palette .toolbar-group[class*="group-"] {
+  padding: 12px 14px 8px;
+  border: 2px solid color-mix(in srgb, var(--grp) 55%, transparent);
+  border-radius: 34px 32px 30px 33px / 30px 33px 33px 30px;
+  background: color-mix(in srgb, var(--grp) 13%, var(--pal-board));
+}
+
+.app.theme-palette .toolbar-caption {
+  background: var(--pal-board);
+  border-radius: 8px;
+  padding: 0 8px;
+  color: color-mix(in srgb, var(--grp, #64708f) 70%, var(--ui-text));
+}
+
+.app.theme-palette .caption-file { --grp: #0f9488; }
+.app.theme-palette .caption-draw { --grp: #7c4dff; }
+.app.theme-palette .caption-view { --grp: #d68a00; }
+.app.theme-palette.dark .caption-file { --grp: #22c3b3; }
+.app.theme-palette.dark .caption-draw { --grp: #9b7bff; }
+.app.theme-palette.dark .caption-view { --grp: #f0a928; }
+
+/* buttons: glossy paint wells */
+.app.theme-palette .toolbar-group[class*="group-"] > button,
+.app.theme-palette .toolbar-group[class*="group-"] > .flyout > .flyout-trigger,
+.app.theme-palette .toolbar-group[class*="group-"] > .grid-snap-toggle,
+.app.theme-palette.dark .toolbar-group[class*="group-"] > button,
+.app.theme-palette.dark .toolbar-group[class*="group-"] > .flyout > .flyout-trigger {
+  background: var(--pal-tab);
+  color: var(--ui-text);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.1), 0 2px 0 var(--pal-rim), 0 4px 6px rgba(0, 0, 0, 0.16);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.app.theme-palette .toolbar-group[class*="group-"] > button:hover:not(.active):not(.needs-save),
+.app.theme-palette .toolbar-group[class*="group-"] > .flyout > .flyout-trigger:hover,
+.app.theme-palette .toolbar-group[class*="group-"] > .grid-snap-toggle:hover,
+.app.theme-palette.dark .toolbar-group[class*="group-"] > button:hover:not(.active):not(.needs-save),
+.app.theme-palette.dark .toolbar-group[class*="group-"] > .flyout > .flyout-trigger:hover {
+  background: color-mix(in srgb, var(--grp) 22%, var(--pal-tab));
+  transform: translateY(-2px);
+}
+
+.app.theme-palette .toolbar-group .toolbar-icon { color: var(--grp); }
+
+/* the loaded brush: active tool */
+.app.theme-palette .toolbar-group > .pencil-btn.active,
+.app.theme-palette .toolbar-group > .pencil-btn.active:hover,
+.app.theme-palette .toolbar-group > .select-mode-btn.active,
+.app.theme-palette .toolbar-group > .select-mode-btn.active:hover,
+.app.theme-palette .toolbar-group > .shapes-toggle.active,
+.app.theme-palette .toolbar-group > .shapes-toggle.active:hover,
+.app.theme-palette.dark .toolbar-group > .pencil-btn.active,
+.app.theme-palette.dark .toolbar-group > .select-mode-btn.active,
+.app.theme-palette.dark .toolbar-group > .shapes-toggle.active {
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--grp) 78%, #fff), var(--grp) 70%);
+  border: 0;
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px var(--pal-board), 0 0 0 5px var(--grp), 0 8px 10px rgba(0, 0, 0, 0.25);
+}
+
+.app.theme-palette.dark .toolbar-group > .pencil-btn.active,
+.app.theme-palette.dark .toolbar-group > .select-mode-btn.active,
+.app.theme-palette.dark .toolbar-group > .shapes-toggle.active {
+  color: #1a1330;
+}
+
+.app.theme-palette .toolbar-group > .pencil-btn.active .toolbar-icon,
+.app.theme-palette .toolbar-group > .select-mode-btn.active .toolbar-icon,
+.app.theme-palette .toolbar-group > .shapes-toggle.active .toolbar-icon {
+  color: inherit;
+}
+
+/* not saved to a file: wet amber paint */
+.app.theme-palette .toolbar-group > .save-file-btn.needs-save,
+.app.theme-palette.dark .toolbar-group > .save-file-btn.needs-save {
+  background: color-mix(in srgb, #d68a00 28%, var(--pal-tab));
+  box-shadow: 0 0 0 2px #d68a00, 0 2px 0 var(--pal-rim);
+}
+
+/* ---- diagram tabs: swatch cards hanging from the rim ---- */
+.app.theme-palette .diagram-tabs-wrap,
+.app.theme-palette.dark .diagram-tabs-wrap {
+  background: transparent;
+  border: 0;
+  padding: 0 40px;
+  position: relative;
+  z-index: 3;
+}
+
+.app.theme-palette .diagram-tab,
+.app.theme-palette.dark .diagram-tab {
+  background: var(--pal-tab);
+  color: var(--ui-text);
+  border: 0;
+  border-radius: 0 0 16px 16px;
+  padding: 10px 16px;
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.16), inset 0 -3px 0 color-mix(in srgb, var(--ui-accent) 60%, transparent);
+}
+
+.app.theme-palette .diagram-tab::before {
+  content: "";
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  background: var(--ui-accent);
+  border-radius: 55% 45% 60% 40% / 50% 60% 40% 50%;
+}
+
+.app.theme-palette .diagram-tab:not(.active):hover,
+.app.theme-palette.dark .diagram-tab:not(.active):hover {
+  background: color-mix(in srgb, var(--ui-accent) 16%, var(--pal-tab));
+  border: 0;
+}
+
+.app.theme-palette .diagram-tab.active,
+.app.theme-palette .diagram-tab.active:hover,
+.app.theme-palette .diagram-tab.active:focus-within,
+.app.theme-palette.dark .diagram-tab.active {
+  background: var(--pal-paper);
+  color: var(--ui-text);
+  border: 0;
+  padding-bottom: 14px;
+  box-shadow: inset 0 -5px 0 var(--ui-accent), 0 5px 8px rgba(0, 0, 0, 0.12);
+}
+
+.app.theme-palette .diagram-tabs-arrow { color: var(--ui-text); }
+
+/* ---- page tabs: dabs ---- */
+.app.theme-palette .page-tabs,
+.app.theme-palette.dark .page-tabs {
+  background: var(--pal-paper);
+  border: 0;
+}
+
+.app.theme-palette .page-tab,
+.app.theme-palette.dark .page-tab {
+  border: 0;
+  border-radius: 18px 14px 17px 13px;
+  background: color-mix(in srgb, var(--ui-text) 9%, var(--pal-paper));
+  color: var(--ui-text);
+  box-shadow: none;
+}
+
+.app.theme-palette .page-tab.active,
+.app.theme-palette.dark .page-tab.active {
+  background: #d68a00;
+  color: #1d1405;
+  box-shadow: none;
+}
+
+.app.theme-palette .page-tab-add {
+  color: var(--ui-text);
+  border-color: var(--ui-muted);
+}
+
+/* ---- canvas paper ---- */
+.app.theme-palette .react-flow,
+.app.theme-palette.dark .react-flow {
+  background-color: var(--pal-paper);
+  border-radius: 0 0 20px 20px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-text) 14%, transparent), 0 12px 24px var(--pal-shadow);
+}
+
+/* ---- floating panels: boards ---- */
+.app.theme-palette .style-panel,
+.app.theme-palette .shapes-dock,
+.app.theme-palette .flyout-panel,
+.app.theme-palette.dark .style-panel,
+.app.theme-palette.dark .shapes-dock,
+.app.theme-palette.dark .flyout-panel {
+  background: var(--pal-board);
+  color: var(--ui-text);
+  border: 0;
+  border-radius: 28px 22px 30px 24px / 24px 28px 24px 30px;
+  box-shadow: inset 0 0 0 2px var(--pal-edge), 0 10px 18px var(--pal-shadow);
+}
+
+.app.theme-palette .shapes-dock-header,
+.app.theme-palette.dark .shapes-dock-header {
+  background: transparent;
+}
+
+.app.theme-palette .shape-btn,
+.app.theme-palette.dark .shape-btn {
+  background: var(--pal-tab);
+  color: var(--ui-text);
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 0 var(--pal-rim);
+}
+
+.app.theme-palette .shape-btn:hover,
+.app.theme-palette.dark .shape-btn:hover {
+  background: color-mix(in srgb, var(--ui-accent) 18%, var(--pal-tab));
+}
+
+.app.theme-palette .style-panel label { color: var(--ui-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app.theme-palette .toolbar-group > button { transition: none; }
+}
+
+.app.theme-palette.dark .canvas-header {
+  background: var(--pal-board);
+}
+
+.app.theme-palette.dark .react-flow__minimap,
+.app.theme-palette.dark .react-flow__controls-button {
+  background: var(--pal-board);
+  color: var(--ui-text);
+  fill: var(--ui-text);
+  border-color: var(--pal-edge);
+}
+.app.theme-palette.dark .react-flow__minimap-mask { fill: rgba(0, 0, 0, 0.45); }
+
+/* ---- Palette: paint-tube shapes dock ---- */
+.app.theme-palette .shapes-grid > .shape-btn:nth-child(4n + 1) { --p: #0f9488; }
+.app.theme-palette .shapes-grid > .shape-btn:nth-child(4n + 2) { --p: #7c4dff; }
+.app.theme-palette .shapes-grid > .shape-btn:nth-child(4n + 3) { --p: #d68a00; }
+.app.theme-palette .shapes-grid > .shape-btn:nth-child(4n + 4) { --p: #64708f; }
+.app.theme-palette.dark .shapes-grid > .shape-btn:nth-child(4n + 1) { --p: #22c3b3; }
+.app.theme-palette.dark .shapes-grid > .shape-btn:nth-child(4n + 2) { --p: #9b7bff; }
+.app.theme-palette.dark .shapes-grid > .shape-btn:nth-child(4n + 3) { --p: #f0a928; }
+.app.theme-palette.dark .shapes-grid > .shape-btn:nth-child(4n + 4) { --p: #8a97b8; }
+
+.app.theme-palette .shapes-grid > .shape-btn,
+.app.theme-palette.dark .shapes-grid > .shape-btn {
+  position: relative;
+  gap: 8px;
+  padding: 8px 20px 8px 22px;
+  background: var(--pal-tab);
+  border: 0;
+  border-radius: 12px 7px 7px 12px;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.1), 0 2px 0 var(--pal-rim);
+  transition: transform 0.15s;
+}
+
+/* crimped, pigment-coloured end of the tube */
+.app.theme-palette .shapes-grid > .shape-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  border-radius: 12px 0 0 12px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--p) 80%, #fff), var(--p));
+  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.2);
+}
+
+/* the screw cap */
+.app.theme-palette .shapes-grid > .shape-btn::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: 28%;
+  bottom: 28%;
+  width: 9px;
+  border-radius: 0 5px 5px 0;
+  background: var(--pal-edge);
+  box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.25);
+}
+
+.app.theme-palette .shapes-grid > .shape-btn .shape-btn-icon {
+  color: var(--p);
+}
+
+.app.theme-palette .shapes-grid > .shape-btn:hover,
+.app.theme-palette.dark .shapes-grid > .shape-btn:hover {
+  background: color-mix(in srgb, var(--p) 16%, var(--pal-tab));
+  transform: translateX(3px);
+}
+
+.app.theme-palette .shapes-grid { gap: 12px 14px; }
+
+/* ---- Palette: brush tray (pencil options) + preset wells ---- */
+.app.theme-palette .pencil-panel,
+.app.theme-palette.dark .pencil-panel {
+  gap: 14px 18px;
+  padding: 16px 22px;
+  border-radius: 40px 28px 36px 30px / 32px 30px 36px 28px;
+  accent-color: var(--ui-accent);
+}
+
+.app.theme-palette .color-swatch,
+.app.theme-palette.dark .color-swatch {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  position: relative;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.22), 0 2px 0 var(--pal-rim);
+}
+
+/* wet-paint highlight (the colour itself is inline) */
+.app.theme-palette .color-swatch::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 18%;
+  width: 28%;
+  height: 24%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.app.theme-palette .color-swatch.active,
+.app.theme-palette.dark .color-swatch.active {
+  box-shadow: 0 0 0 3px var(--pal-board), 0 0 0 5px var(--ui-text);
+  transform: translateY(-2px);
+}
+
+.app.theme-palette .color-swatches { gap: 10px; }
+
+.app.theme-palette .pencil-panel input[type="range"] {
+  height: 8px;
+  border-radius: 6px;
+}
+
+.app.theme-palette .pencil-hint { color: var(--ui-accent-strong); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app.theme-palette .shapes-grid > .shape-btn { transition: none; }
+}
+
+/* Classic light: groups keep their colored outline but no fill. */
+.app:not(.dark):not(.theme-palette) .toolbar-group[class*="group-"] {
+  background: transparent;
+}
+
+/* Zoom controls and pages bar share one row: same height, same baseline. */
+.react-flow__controls.horizontal {
+  height: 38px;
+  align-items: stretch;
+}
+.react-flow__controls.horizontal .react-flow__controls-button {
+  height: 100%;
+  width: 34px;
+}
+.app .canvas-flow > .page-tabs {
+  height: 38px;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.page-tabs .page-tab {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+/* Icons beside the New / Export menu items. */
+.flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.flyout-item .toolbar-icon {
+  flex: none;
+  color: var(--grp, #5b6ee1);
+}
+
+/* ---- Palette: compact board (about half the height) ---- */
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header {
+  margin-top: 8px;
+  gap: 8px;
+  padding: 8px 28px 10px;
+  border-radius: 44px 36px 50px 34px / 34px 30px 44px 32px;
+}
+
+.app.theme-palette .canvas-header-top { min-height: 0; }
+
+/* caption sits on the group's outline instead of taking its own row */
+.app.theme-palette .toolbar-cluster { position: relative; gap: 0; }
+.app.theme-palette .toolbar-caption {
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  z-index: 1;
+  padding: 0 7px;
+  font-size: 9px;
+}
+
+.app.theme-palette .toolbar-group[class*="group-"] {
+  padding: 7px 10px 5px;
+  gap: 6px;
+}
+
+.app.theme-palette .toolbar-group > button,
+.app.theme-palette .toolbar-group > .flyout > .flyout-trigger,
+.app.theme-palette .toolbar-group > .grid-snap-toggle {
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 12px;
+  gap: 5px;
+}
+
+.app.theme-palette .canvas-header-actions { gap: 10px 14px; }
+.app.theme-palette .toolbar-group.group-app { padding: 4px 8px; }
+
+/* one toolbar row: tighter buttons so File, Draw and View fit side by side */
+.app.theme-palette .toolbar-group > button,
+.app.theme-palette .toolbar-group > .flyout > .flyout-trigger,
+.app.theme-palette .toolbar-group > .grid-snap-toggle {
+  padding: 0 7px;
+  gap: 4px;
+}
+.app.theme-palette .toolbar-group[class*="group-"] { padding: 7px 8px 5px; gap: 5px; }
+.app.theme-palette .canvas-header-actions { flex-wrap: nowrap; gap: 8px; }
+
+/* The save status stays in the toolbar row, after the View group; the long
+   "saved in this browser, not saved to a file" text is shown in short form
+   (the full text stays in the page for screen readers and as a tooltip). */
+.app.theme-palette .canvas-header-actions { flex-wrap: wrap; }
+.app.theme-palette .save-status {
+  margin: 0 0 0 4px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.app.theme-palette .save-status-file {
+  font-size: 0;
+}
+.app.theme-palette .save-status-file::before {
+  content: "Saved in browser\A not saved to a file";
+  display: block;
+  white-space: pre;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #b87500;
+}
+.app.theme-palette.dark .save-status-file::before { color: #f0a928; }
+
+
+/* squeeze the row just enough for the two-line status at 1280px */
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header { padding-left: 20px; padding-right: 20px; }
+.app.theme-palette .canvas-header-actions { gap: 6px; }
+.app.theme-palette .save-status { margin-left: 0; }
+.app.theme-palette .toolbar-group > button,
+.app.theme-palette .toolbar-group > .flyout > .flyout-trigger,
+.app.theme-palette .toolbar-group > .grid-snap-toggle { padding: 0 6px; }
+
+.app.theme-palette .toolbar-group > button,
+.app.theme-palette .toolbar-group > .flyout > .flyout-trigger,
+.app.theme-palette .toolbar-group > .grid-snap-toggle { padding: 0 5px; gap: 3px; }
+.app.theme-palette .toolbar-group[class*="group-"] { padding-left: 6px; padding-right: 6px; gap: 3px; }
+.app.theme-palette .save-status-file::before { font-size: 9.5px; }
+
+/* ---- Palette: zoom controls as a board pill ---- */
+.app.theme-palette .react-flow__controls,
+.app.theme-palette.dark .react-flow__controls {
+  background: var(--pal-board);
+  border-radius: 999px;
+  padding: 0 6px 0 2px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px var(--pal-edge), 0 8px 16px var(--pal-shadow);
+  border: 0;
+}
+
+.app.theme-palette .react-flow__controls-button,
+.app.theme-palette.dark .react-flow__controls-button {
+  background: transparent;
+  color: var(--ui-text);
+  fill: var(--ui-text);
+  border: 0;
+  border-radius: 50%;
+  width: 32px;
+  margin: 3px 1px;
+  height: auto;
+}
+
+.app.theme-palette .react-flow__controls-button:hover,
+.app.theme-palette.dark .react-flow__controls-button:hover {
+  background: color-mix(in srgb, #d68a00 28%, var(--pal-tab));
+}
+
+.app.theme-palette .react-flow__controls-button svg { fill: currentColor; }
+
+.app.theme-palette .react-flow__controls > .panel-grip {
+  background: repeating-linear-gradient(0deg, var(--pal-edge) 0 2px, transparent 2px 5px) center / 2px 60% no-repeat;
+}
+
+/* minimap in the same board style */
+.app.theme-palette .react-flow__minimap,
+.app.theme-palette.dark .react-flow__minimap {
+  background: var(--pal-board);
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px var(--pal-edge), 0 8px 16px var(--pal-shadow);
+}
+
+/* Classic dark: zoom controls and minimap follow the dark theme (they were white). */
+.app.dark:not(.theme-palette) .react-flow__controls {
+  background: #2a2d42;
+  border: 1.5px solid #4b5078;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.app.dark:not(.theme-palette) .react-flow__controls-button {
+  background: #2a2d42;
+  color: #e8eaf8;
+  fill: #e8eaf8;
+  border-color: #4b5078;
+}
+.app.dark:not(.theme-palette) .react-flow__controls-button:hover { background: #343855; }
+.app.dark:not(.theme-palette) .react-flow__controls-button svg { fill: currentColor; }
+.app.dark:not(.theme-palette) .react-flow__minimap {
+  background: #20222f;
+  border: 1.5px solid #4b5078;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.app.dark:not(.theme-palette) .react-flow__minimap-mask { fill: rgba(0, 0, 0, 0.5); }
+
+/* Classic (light and dark): zoom controls match the pages bar - a rounded pill
+   in the theme's surface, outline and text colours. */
+.app:not(.theme-palette) .react-flow__controls {
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 999px;
+  overflow: hidden;
+  padding: 0 4px 0 0;
+  box-shadow: 0 4px 16px rgba(30, 40, 90, 0.2);
+}
+.app.dark:not(.theme-palette) .react-flow__controls {
+  background: #23232e;
+  border-color: #4b5078;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+.app:not(.theme-palette) .react-flow__controls-button {
+  background: transparent;
+  color: var(--ui-text);
+  fill: var(--ui-text);
+  border: 0;
+  border-radius: 50%;
+  margin: 3px 1px;
+  height: auto;
+  width: 32px;
+}
+.app:not(.theme-palette) .react-flow__controls-button:hover { background: var(--ui-accent-soft); }
+.app:not(.theme-palette) .react-flow__controls-button svg { fill: currentColor; }
+.app.dark:not(.theme-palette) .react-flow__controls-button:hover { background: #343855; }
+.app:not(.theme-palette) .react-flow__controls > .panel-grip {
+  background: repeating-linear-gradient(0deg, var(--ui-border) 0 2px, transparent 2px 5px) center / 2px 60% no-repeat;
+}
+.app:not(.theme-palette) .react-flow__minimap {
+  border: 1.5px solid var(--ui-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.app.dark:not(.theme-palette) .react-flow__controls { border-radius: 999px; }
+.app.dark:not(.theme-palette) .react-flow__controls-button { background: transparent; border: 0; }
+.app.dark:not(.theme-palette) .react-flow__controls-button:hover { background: #343855; }
+
+/* Icon-only toolbar buttons (History, Find, Present, mode, theme, shortcuts). */
+.toolbar-group > button[aria-label="History"],
+.toolbar-group > button[aria-label="Find"],
+.toolbar-group > button[aria-label="Present"],
+.toolbar-group > button[aria-label="Shortcuts"],
+.toolbar-group > button[aria-label="Dark mode"],
+.toolbar-group > button[aria-label="Light mode"],
+.toolbar-group > button[aria-label^="Theme:"] {
+  padding: 0 9px;
+  gap: 0;
+}
+
+/* Status text (all themes): short two-line label for "saved in the browser, not
+   in a file", so it stays beside the View group and the header never changes
+   height when the status changes. Full wording stays in the page and tooltip. */
+.save-status { white-space: nowrap; }
+.save-status-file { font-size: 0; }
+.save-status-file::before {
+  content: "Saved in browser\A not saved to a file";
+  display: block;
+  white-space: pre;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #9a6400;
+}
+.app.dark .save-status-file::before { color: #f0a928; }
+
+/* Slightly tighter toolbar buttons (all themes) so the status text always fits
+   on the first toolbar row at ~1280px and the header height stays constant. */
+.toolbar-group > button,
+.toolbar-group > .flyout > .flyout-trigger,
+.toolbar-group > .grid-snap-toggle {
+  padding-left: 8px;
+  padding-right: 8px;
+  gap: 5px;
+}
+.save-status { margin-left: 4px; font-size: 12px; }
+
+/* =====================================================================
+   One toolbar row: title, File / Draw / View groups and the app buttons share
+   the header's first row (wrapping only when the window is too narrow), so
+   the canvas gets the space. The save status lives in the tab pane.
+   ===================================================================== */
+.canvas-header,
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+.canvas-header { padding: 12px 14px 8px; }
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header { padding: 12px 22px 8px; }
+
+.canvas-header-top,
+.canvas-header-actions { display: contents; }
+
+.canvas-header .toolbar-cluster { order: 1; }
+.canvas-header .canvas-header-meta { order: 2; margin-left: auto; }
+
+/* group captions sit on the outline instead of taking a row */
+.canvas-header .toolbar-cluster { position: relative; gap: 0; }
+.canvas-header .toolbar-caption {
+  position: absolute;
+  top: -7px;
+  left: 16px;
+  z-index: 1;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--ui-surface);
+}
+.app.dark .canvas-header .toolbar-caption { background: #20202b; }
+.app.theme-palette .canvas-header .toolbar-caption,
+.app.theme-palette.dark .canvas-header .toolbar-caption { background: var(--pal-board); }
+
+/* save status: dedicated slot at the right end of the tab pane */
+.diagram-tabs-status {
+  flex: none;
+  width: 156px;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 14px 0 8px;
+  box-sizing: border-box;
+  text-align: right;
+}
+.diagram-tabs-status .save-status { margin: 0; }
+.app.theme-palette .diagram-tabs-status .save-status-saved { color: var(--ui-text); }
+.app.theme-palette .diagram-tabs-status { position: relative; z-index: 3; }
+
+/* tighter single row */
+.canvas-header { padding: 12px 10px 8px; gap: 10px 8px; }
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header { padding: 12px 20px 8px; gap: 10px 8px; }
+.canvas-header .canvas-header-meta { padding: 3px; gap: 3px; }
+.save-status.save-status-file { font-size: 0; }
+.save-status.save-status-file::before { font-size: 10px; }
+
+/* Higher-contrast colour for the "saved in browser / not saved to a file" label. */
+.save-status.save-status-file::before { color: #7a4a00; font-weight: 800; }
+.app.theme-palette .save-status.save-status-file::before { color: #5c3700; }
+.app.dark .save-status.save-status-file::before,
+.app.theme-palette.dark .save-status.save-status-file::before { color: #ffc54d; }
+
+/* Form controls inside floating panels follow the theme and mode. */
+.style-panel select,
+.style-panel input[type="number"],
+.style-panel input[type="text"],
+.edge-style-panel select,
+.link-popover select,
+.link-popover input[type="text"],
+.data-panel select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--ui-text);
+  background-color: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 8px;
+  padding: 3px 8px;
+  min-height: 26px;
+  box-sizing: border-box;
+  color-scheme: light;
+}
+.app.dark .style-panel select,
+.app.dark .style-panel input[type="number"],
+.app.dark .style-panel input[type="text"],
+.app.dark .edge-style-panel select,
+.app.dark .link-popover select,
+.app.dark .link-popover input[type="text"],
+.app.dark .data-panel select {
+  color-scheme: dark;
+}
+.style-panel select:hover,
+.edge-style-panel select:hover,
+.link-popover select:hover { border-color: var(--ui-accent); }
+.style-panel select:focus-visible,
+.style-panel input:focus-visible,
+.edge-style-panel select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  outline-offset: 1px;
+}
+.style-panel select option,
+.edge-style-panel select option { background: var(--ui-surface); color: var(--ui-text); }
+.app.theme-palette .style-panel select,
+.app.theme-palette .edge-style-panel select {
+  border: 0;
+  border-radius: 999px;
+  padding: 3px 12px;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.1), 0 2px 0 var(--pal-rim);
+}
+.app.theme-palette .style-panel input[type="number"],
+.app.theme-palette .style-panel input[type="text"] { border-color: var(--pal-edge); }
+
+/* Draw the select ourselves so its fill follows the theme (the native control
+   ignored the background in some browsers). */
+.style-panel select,
+.edge-style-panel select,
+.link-popover select,
+.data-panel select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 26px;
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 10px 6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23444a66' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.app.dark .style-panel select,
+.app.dark .edge-style-panel select,
+.app.dark .link-popover select,
+.app.dark .data-panel select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e8eaf8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.app.theme-palette .style-panel select,
+.app.theme-palette .edge-style-panel select { padding-right: 28px; }
+
+/* Minimap: surface and viewport window follow the theme and mode. */
+.app:not(.dark):not(.theme-palette) .react-flow__minimap { background: var(--ui-surface-2); box-shadow: 0 4px 16px rgba(30, 40, 90, 0.2); }
+.app:not(.dark):not(.theme-palette) .react-flow__minimap-mask { fill: rgba(79, 95, 224, 0.1); }
+.app.theme-palette:not(.dark) .react-flow__minimap-mask { fill: rgba(120, 85, 35, 0.2); }
+.app.theme-palette .react-flow__minimap,
+.app.theme-palette.dark .react-flow__minimap { background: var(--pal-paper); }
+
+/* Pencil: "Auto" colour toggle */
+.pencil-auto {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  min-height: 24px;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pencil-auto.active {
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
+  color: #fff;
+}
+.app.dark .pencil-auto.active { color: #1a1330; }
+
+/* Freehand strokes drawn with the Auto pen follow the mode. */
+.freehand-auto { color: #000000; }
+.app.dark .freehand-auto { color: #ffffff; }
+
+/* ---- White Board notebook ruled lines: dark orange, soft enough to write over ---- */
+.notebook-rules {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  --rule: rgba(217, 119, 6, 0.42);
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), var(--rule) calc(100% - 1px));
+  background-repeat: repeat;
+}
+.app.dark .notebook-rules { --rule: rgba(251, 146, 60, 0.38); }
+
+
+/* Notebook lines toggle inside the pencil panel */
+.pencil-notebook {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  min-height: 26px;
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pencil-notebook .toolbar-icon { color: #d97706; }
+.pencil-notebook.active {
+  background: color-mix(in srgb, #d97706 24%, var(--ui-surface));
+  border-color: #d97706;
+}
+
+/* ---- typing straight onto the canvas ---- */
+.text-node-auto .text-node-text,
+.text-node-auto .text-node-textarea { color: #000000; }
+.app.dark .text-node-auto .text-node-text,
+.app.dark .text-node-auto .text-node-textarea { color: #ffffff; }
+.canvas-flow-texting .react-flow__pane { cursor: text; }
+.text-node-textarea { overflow: hidden; line-height: 1.25; }
+
+/* Text tool button: same solid group colour as the other toggled tools. */
+.toolbar-group > .text-tool-btn.active,
+.toolbar-group > .text-tool-btn.active:hover,
+.toolbar-group > .hand-mode-btn.active,
+.toolbar-group > .hand-mode-btn.active:hover,
+.toolbar-group > .focus-mode-btn.active,
+.toolbar-group > .focus-mode-btn.active:hover {
+  background: var(--grp);
+  border-color: color-mix(in srgb, var(--grp) 70%, #000);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--grp) 50%, transparent);
+  color: #fff;
+}
+.app.dark .toolbar-group > .text-tool-btn.active,
+.app.dark .toolbar-group > .hand-mode-btn.active { color: #1a1330; }
+.toolbar-group > .text-tool-btn.active .toolbar-icon,
+.toolbar-group > .hand-mode-btn.active .toolbar-icon { color: inherit; }
+.app.theme-palette .toolbar-group > .text-tool-btn.active,
+.app.theme-palette.dark .toolbar-group > .text-tool-btn.active,
+.app.theme-palette .toolbar-group > .hand-mode-btn.active,
+.app.theme-palette.dark .toolbar-group > .hand-mode-btn.active {
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--grp) 78%, #fff), var(--grp) 70%);
+  border: 0;
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px var(--pal-board), 0 0 0 5px var(--grp), 0 8px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Text boxes: typing and display share one box model, so a box fitted while
+   typing still fits when committed. */
+.text-node-text,
+.text-node-sizer,
+.text-node-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.text-node-textarea { border-style: dashed; border-color: #999; }
+
+.text-node-sizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: 360px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Connectors and their arrowheads: black on a light canvas, white on a dark one
+   (React Flow's default is a pale grey). A selected connector turns the accent
+   colour so it still stands out from the black ones. */
+.app .react-flow {
+  --xy-edge-stroke-default: #000000;
+  --xy-edge-stroke-selected-default: #4f5fe0;
+}
+.app.dark .react-flow {
+  --xy-edge-stroke-default: #ffffff;
+  --xy-edge-stroke-selected-default: #9b9bff;
+}
+
+/* Arrowheads: React Flow paints colourless ones in a hard-coded pale grey via an
+   inline style; repaint just those, so a connector with its own colour is kept. */
+.app .react-flow__arrowhead polyline[style*="177, 177, 183"],
+.app .react-flow__arrowhead path[style*="177, 177, 183"] {
+  stroke: var(--xy-edge-stroke-default) !important;
+  fill: var(--xy-edge-stroke-default) !important;
+}
+/* Our own ER/crow's-foot markers follow the same ink colour. */
+.app .marker-ink-fill { fill: #000; }
+.app .marker-ink-stroke { stroke: #000; }
+.app .marker-ink-hollow { fill: #fff; stroke: #000; }
+.app.dark .marker-ink-fill { fill: #fff; }
+.app.dark .marker-ink-stroke { stroke: #fff; }
+.app.dark .marker-ink-hollow { fill: #16161d; stroke: #fff; }
+
+/* "Saved in browser" (green) over "Not saved to a file" (red): two lines, two colours. */
+.app .save-status.save-status-file::before,
+.app .save-status.save-status-file::after {
+  display: block;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+.app .save-status.save-status-file::before { content: "Saved in browser"; color: #17692c; }
+.app .save-status.save-status-file::after { content: "Not saved to a file"; color: #b3261e; }
+.app.theme-palette:not(.dark) .save-status.save-status-file::before { color: #0f4f20; }
+.app.theme-palette:not(.dark) .save-status.save-status-file::after { color: #8f1a12; }
+.app.dark .save-status.save-status-file::before,
+.app.theme-palette.dark .save-status.save-status-file::before { color: #5be38d; }
+.app.dark .save-status.save-status-file::after,
+.app.theme-palette.dark .save-status.save-status-file::after { color: #ff8a80; }
+
+
+/* =====================================================================
+   Canvas footer: page tabs on the left, zoom controls on the right
+   ===================================================================== */
+.canvas-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+  background: var(--ui-surface);
+  border-top: 1px solid var(--ui-border-soft);
+  position: relative;
+  z-index: 5;
+}
+.app.dark .canvas-footer { background: #20202b; border-top-color: #343852; }
+
+.app .canvas-footer .page-tabs,
+.app.dark .canvas-footer .page-tabs {
+  position: static;
+  transform: none;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.canvas-footer .page-tabs-list { display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.canvas-footer .page-tab { flex: none; }
+
+.canvas-footer-zoom { margin-left: auto; display: flex; align-items: center; flex: none; }
+.canvas-footer .react-flow__panel {
+  position: static;
+  margin: 0;
+  transform: none;
+}
+.canvas-footer .react-flow__controls { box-shadow: none; }
+
+/* Palette: the footer is the bottom edge of the board */
+.app.theme-palette .canvas-footer,
+.app.theme-palette.dark .canvas-footer {
+  background: var(--pal-board);
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+  box-shadow: inset 0 0 0 2px var(--pal-edge), 0 12px 24px var(--pal-shadow);
+}
+.app.theme-palette .react-flow,
+.app.theme-palette.dark .react-flow { border-radius: 0; }
+.app.theme-palette .canvas-footer .react-flow__controls,
+.app.theme-palette.dark .canvas-footer .react-flow__controls { box-shadow: none; background: transparent; }
+
+/* Palette: header (and its flyout menus) must stay above the hanging tabs. */
+.app.theme-palette .canvas-header,
+.app.theme-palette.dark .canvas-header {
+  z-index: 10;
+}
+
+/* Collapsed Shapes dock (classic): the lone header must round all four
+   corners so no square edge pokes past the dock's rounded outline. */
+.app:not(.theme-palette) .shapes-dock.collapsed {
+  overflow: hidden;
+}
+.app:not(.theme-palette) .shapes-dock.collapsed .shapes-dock-header {
+  border-radius: 10px;
+  border-bottom: 0;
+}
+.app:not(.theme-palette):not(.dark) .shapes-dock.collapsed {
+  background: #fff;
+  border-color: #8d95b4;
+}
+
+/* Page tabs are dragged to reorder */
+.canvas-footer .page-tab { cursor: grab; }
+.canvas-footer .page-tab.dragging { opacity: 0.45; }
+.canvas-footer .page-tab.drop-before { box-shadow: inset 3px 0 0 var(--ui-accent); }
+.canvas-footer .page-tab.drop-after { box-shadow: inset -3px 0 0 var(--ui-accent); }
+.canvas-footer .page-tab input { cursor: text; }
+
+/* Footer zoom row order: zoom in, zoom %, zoom out, fit, Present, lock. */
+.canvas-footer .react-flow__controls-zoomin { order: 0; }
+.canvas-footer .controls-zoom-value { order: 1; }
+.canvas-footer .react-flow__controls-zoomout { order: 2; }
+.canvas-footer .react-flow__controls-fitview { order: 3; }
+.canvas-footer .react-flow__controls-interactive { order: 4; }
+.app .react-flow__controls-button.controls-zoom-value {
+  width: auto;
+  min-width: 52px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-text);
+  border-radius: 999px;
+}
+
+/* ---- tab bars: no padding around the tabs; the bar is exactly as tall as its tabs ---- */
+.app .diagram-tabs,
+.app.dark .diagram-tabs {
+  padding: 0 8px;
+  gap: 4px;
+  scrollbar-width: none; /* the arrows and the wheel scroll; a scrollbar would add height */
+}
+.app .diagram-tabs::-webkit-scrollbar { display: none; }
+.app .diagram-tabs-wrap { align-items: stretch; }
+.app .diagram-tabs-arrow { align-self: stretch; padding-top: 0; padding-bottom: 0; }
+
+.app .canvas-footer,
+.app.dark .canvas-footer {
+  min-height: 0;
+  height: auto;
+  padding: 0 10px;
+}
+.app .canvas-footer .page-tabs-list { align-items: stretch; }
+.app .canvas-footer .page-tabs { align-self: stretch; }
+.app .canvas-footer .page-tab,
+.app .canvas-footer .page-tab-add {
+  height: 28px;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+  align-self: center;
+}
+.app .canvas-footer .react-flow__controls.horizontal { height: 28px; }
+.app .canvas-footer .react-flow__controls.horizontal .react-flow__controls-button { height: 100%; width: 28px; margin: 0; }
+.app .canvas-footer .react-flow__controls.horizontal .controls-zoom-value { width: auto; min-width: 48px; }
+.app .canvas-footer .react-flow__controls { padding: 0 2px; }
+
+/* Presentation mode: a second Exit button at the top right */
+.presentation-exit-top {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1001;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.presentation-exit-top:hover,
+.presentation-exit-top:focus-visible { opacity: 1; background: rgba(0, 0, 0, 0.9); }
+
+/* ---- tab strip backdrop: plain white (solid dark in dark mode), no pattern ---- */
+.app:not(.theme-palette) .diagram-tabs-wrap {
+  background: #ffffff;
+  border-bottom: 1px solid #b4bbe0;
+}
+.app.dark:not(.theme-palette) .diagram-tabs-wrap {
+  background: #1a1c2b;
+  border-bottom: 1px solid #3a3f6e;
+}
+.app.theme-palette .diagram-tabs-wrap,
+.app.theme-palette.dark .diagram-tabs-wrap { background-image: none; }
+
+/* save status: left-aligned in its slot */
+.diagram-tabs-status {
+  justify-content: flex-start;
+  text-align: left;
+  padding-left: 14px;
+}
+
+/* ---- tools panel: icon-only draw tools, floating at the bottom centre ---- */
+.tools-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 6px;
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-border);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(30, 40, 90, 0.2);
+  color: var(--ui-text);
+}
+.app.dark .tools-panel { background: #23232e; border-color: #4b5078; }
+.tools-panel > .panel-grip { font-size: 16px; padding: 0 2px; }
+
+.tool-panel-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ui-text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.tool-panel-btn .toolbar-icon { width: 18px; height: 18px; }
+.tool-panel-btn:hover { background: var(--ui-accent-soft); }
+.tool-panel-btn:disabled { opacity: 0.35; cursor: default; background: transparent; }
+.tool-panel-btn.active,
+.tool-panel-btn.active:hover { background: #7c4dff; color: #fff; }
+.app.dark .tool-panel-btn.active,
+.app.dark .tool-panel-btn.active:hover { background: #a78bfa; color: #1a1330; }
+.tool-panel-btn.active .toolbar-icon { color: inherit; }
+.tool-panel-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--ui-accent) 45%, transparent); outline-offset: 1px; }
+
+/* Palette: a little board with glossy wells */
+.app.theme-palette .tools-panel,
+.app.theme-palette.dark .tools-panel {
+  background: var(--pal-board);
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--pal-edge), 0 8px 16px var(--pal-shadow);
+}
+.app.theme-palette .tool-panel-btn,
+.app.theme-palette.dark .tool-panel-btn {
+  background: var(--pal-tab);
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.1), 0 2px 0 var(--pal-rim);
+}
+.app.theme-palette .tool-panel-btn.active,
+.app.theme-palette.dark .tool-panel-btn.active {
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, #7c4dff 78%, #fff), #7c4dff 70%);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--pal-board), 0 0 0 5px #7c4dff;
+}
+
+/* Hand tool: dragging anywhere moves the canvas */
+.canvas-flow-hand .react-flow__pane,
+.canvas-flow-hand .react-flow__node,
+.canvas-flow-hand .react-flow__edge { cursor: grab; }
+.canvas-flow-hand .react-flow__pane:active,
+.canvas-flow-hand .react-flow__node:active { cursor: grabbing; }
+
+/* ---- Focus mode: a White Board / Notebook full screen, with its panels kept ---- */
+.toolbar-group > button[aria-label="Focus mode"] { padding: 0 9px; gap: 0; }
+.canvas-area.focus {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--ui-surface-2, #fff);
+}
+.app.dark .canvas-area.focus { background: #16161d; }
+.app.theme-palette .canvas-area.focus,
+.app.theme-palette.dark .canvas-area.focus {
+  padding: 0;
+  background: radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--pal-table) 85%, #fff), var(--pal-table) 70%);
+}
+.canvas-area.focus .canvas-header { display: none; }
+.canvas-area.focus .canvas-flow { flex: 1; height: auto; }
+/* the tab strip goes; only the save status stays, as a small pill at the top left */
+.canvas-area.focus .diagram-tabs-wrap {
+  position: absolute;
+  bottom: 44px;
+  left: 12px;
+  z-index: 30;
+  width: auto;
+  min-height: 0;
+  background: color-mix(in srgb, var(--ui-surface) 90%, transparent);
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 10px;
+}
+.canvas-area.focus .diagram-tabs-wrap > :not(.diagram-tabs-status) { display: none; }
+.canvas-area.focus .diagram-tabs-status { width: auto; min-width: 0; padding: 4px 10px; }
+.app.theme-palette .canvas-area.focus .diagram-tabs-wrap { background: var(--pal-board); border: 0; box-shadow: inset 0 0 0 2px var(--pal-edge); }
+.canvas-area.focus .canvas-footer { border-radius: 0; }
+
+/* keep the pencil palette clear of the Exit button */
+.canvas-area.focus .pencil-panel { max-width: calc(100% - 200px); }
+
+/* divider between the drawing tools and the focus-mode button */
+.tools-panel .tools-sep {
+  width: 1.5px;
+  align-self: stretch;
+  margin: 4px 2px;
+  border-radius: 2px;
+  background: var(--ui-border);
+  flex: none;
+}
+.app.theme-palette .tools-panel .tools-sep { background: var(--pal-edge); }
+
+/* ---- responsive toolbar: labels give way to icons when the row runs out of room ---- */
+.canvas-header { position: relative; z-index: 10; }
+.btn-label { white-space: nowrap; }
+/* Collapse order (measured): View labels first, then Draw, then About, last File. */
+@media (max-width: 1740px) {
+  .group-view .btn-label { display: none; }
+}
+@media (max-width: 1600px) {
+  .group-draw .btn-label { display: none; }
+}
+@media (max-width: 1260px) {
+  .group-app .btn-label { display: none; }
+}
+@media (max-width: 1185px) {
+  .group-file .btn-label,
+  .group-file .caret { display: none; }
+}
+
+/* GitHub button: neutral dark mark, like GitHub's own */
+.toolbar-group .icon-github { color: #24292f; }
+.app.dark .toolbar-group .icon-github { color: #e6edf3; }
+.toolbar-group > button[aria-label="AdhocDraw on GitHub"] { padding: 0 9px; gap: 0; }
+
+/* ---- brand (links to the website) ---- */
+.canvas-header .brand, .canvas-header-top .brand {
+  order: 0;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+  padding: 2px 4px;
+  border-radius: var(--ui-radius, 6px);
+  white-space: nowrap;
+}
+.app-logo { display: block; color: #1a1a1a; }
+.app.dark .app-logo { color: #f5f5f5; }
+.brand:hover .app-logo { opacity: 0.8; }
+.brand:focus-visible { outline: 2px solid var(--ui-accent, #4f5fe0); outline-offset: 2px; }
+.focus-diagram-name { display: none; }
+.canvas-area.focus .focus-diagram-name::before { content: attr(data-name); }
+.canvas-area.focus .focus-diagram-name {
+  display: inline-block;
+  font-weight: 600;
+  margin-right: 10px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.about-logo { margin: 0 0 12px; }
+
+.about-updated { font-size: 12px; opacity: 0.7; }

@@ -1,0 +1,38 @@
+name: Post-deploy privacy check
+
+# After every deploy (and weekly, in case the host changes something on its own), load
+# the LIVE site in a browser and fail if it makes a request to another origin, sets a
+# cookie, stores anything unexpected or loses its Content-Security-Policy.
+# See scripts/check-live-site.mjs. No secrets or tokens are used.
+on:
+  workflow_run:
+    workflows: ["Deploy to GitHub Pages"]
+    types: [completed]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-site:
+    name: Live site privacy check
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+      - name: Wait for the deploy to be served
+        if: ${{ github.event_name == 'workflow_run' }}
+        run: sleep 60
+      - name: Check the live site
+        run: node scripts/check-live-site.mjs https://www.adhocdraw.com

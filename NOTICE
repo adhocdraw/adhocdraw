@@ -10,3 +10,10 @@ Trademarks: the name "AdhocDraw" and any AdhocDraw logo are not licensed under
 the Apache License (see section 6 of the LICENSE). You may use the name only to
 describe where the software comes from, and a modified version should not be
 presented as the official AdhocDraw.
+
+Logo: the AdhocDraw logo and icon files (client/public/logo.svg,
+client/public/logo-dark.svg and client/public/favicon.svg) are not part of the
+software licensed under the Apache License. They are Copyright 2026 Vikranth
+Pandiri, all rights reserved. They may not be copied, modified or reused, other
+than as shipped with an unmodified AdhocDraw, without permission. Forks should
+remove them and use their own name and logo.

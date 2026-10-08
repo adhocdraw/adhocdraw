@@ -1,0 +1,20 @@
+{
+  "_comment": "Approved production dependencies of the AdhocDraw client. Adding a library means adding it here on purpose, after checking its licence and that it makes no network requests (see CONTRIBUTING.md). The privacy check fails on any dependency not listed.",
+  "dependencies": [
+    "@floating-ui/react",
+    "@msagl/core",
+    "@radix-ui/react-alert-dialog",
+    "@radix-ui/react-dropdown-menu",
+    "@radix-ui/react-toast",
+    "@xyflow/react",
+    "browser-fs-access",
+    "framer-motion",
+    "fuzzy",
+    "html-to-image",
+    "jspdf",
+    "perfect-freehand",
+    "react",
+    "react-dom",
+    "uuid"
+  ]
+}

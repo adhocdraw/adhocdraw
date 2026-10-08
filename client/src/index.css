@@ -1,0 +1,16 @@
+/* Copyright 2026 Vikranth Pandiri
+ * SPDX-License-Identifier: Apache-2.0 */
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+}

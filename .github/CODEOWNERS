@@ -1,0 +1,18 @@
+# Every change needs the maintainer's review (enable "Require review from Code
+# Owners" in the branch protection rules - see .github/MAINTAINERS.md).
+*                                   @adhocdraw/maintainers
+
+# Privacy-critical files, listed explicitly so they are never missed.
+/client/vite.config.ts              @adhocdraw/maintainers
+/client/nginx.conf                  @adhocdraw/maintainers
+/client/scripts/                    @adhocdraw/maintainers
+/client/package.json                @adhocdraw/maintainers
+/client/package-lock.json           @adhocdraw/maintainers
+/client/index.html                  @adhocdraw/maintainers
+/client/src/api.ts                  @adhocdraw/maintainers
+/client/src/localStore.ts           @adhocdraw/maintainers
+/e2e/                        @adhocdraw/maintainers
+/.github/                           @adhocdraw/maintainers
+/LICENSE                            @adhocdraw/maintainers
+/NOTICE                             @adhocdraw/maintainers
+/PRIVACY.md                         @adhocdraw/maintainers

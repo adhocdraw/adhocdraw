@@ -1,0 +1,16 @@
+{
+  "name": "adhocdraw-e2e",
+  "private": true,
+  "license": "Apache-2.0",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "check:live": "node scripts/check-live-site.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.3"
+  }
+}
