@@ -8,23 +8,29 @@ changes. They live in the repository's **Settings** on GitHub, not in the code.
       authenticator app).
 - [ ] Commit signing enabled (optional but recommended), so commits are verifiable.
 
-## Branch protection for `main` (Settings > Branches > Add rule)
-- [ ] Require a pull request before merging (no direct pushes to `main`).
-- [ ] Require approvals: 1.
-- [ ] Require review from Code Owners (see `.github/CODEOWNERS`).
-- [ ] Require status checks to pass before merging: **Privacy check** (the
-      workflow in `.github/workflows/privacy-check.yml`).
-- [ ] Require branches to be up to date before merging.
+## Branch protection for `main` (Settings > Branches or Rules > Rulesets)
+
+With a single maintainer, do **not** require approvals or Code Owner review: you cannot
+approve your own pull request, so that would lock you out of merging. Use:
+
+- [ ] Require status checks to pass before merging: **Privacy check** (the workflow in
+      `.github/workflows/privacy-check.yml`; it appears in the list after it has run once).
 - [ ] Do not allow force pushes; do not allow deletions.
-- [ ] Include administrators (so the rules apply to you too).
+- [ ] Optional: require a pull request before merging, with **0** required approvals.
+- [ ] Include administrators (so the rules apply to you too), once the above is set so
+      you can still merge your own pull requests.
+
+When a second maintainer joins, also turn on: required approvals = 1, and "Require
+review from Code Owners" (see `.github/CODEOWNERS`).
 
 ## Publishing (GitHub Pages)
 - [ ] Settings > Pages: Source = **GitHub Actions** (the workflow
       `.github/workflows/deploy-pages.yml` publishes the app).
 - [ ] Custom domain `www.adhocdraw.com`, **Enforce HTTPS** on; DNS `CNAME` record
       `www` -> `adhocdraw.github.io`.
-- [ ] Create the team `maintainers` in the `adhocdraw` organisation (the Code Owners
-      in `.github/CODEOWNERS` point to `@adhocdraw/maintainers`) and add yourself.
+- [ ] Create the team `maintainers` in the `adhocdraw` organisation (github.com/orgs/adhocdraw/teams;
+      the Code Owners in `.github/CODEOWNERS` point to `@adhocdraw/maintainers`), add
+      yourself, and give the team Write access to the repository (Team > Repositories).
 - [ ] Settings > Environments > `github-pages`: restrict deployments to the `main`
       branch.
 
@@ -33,8 +39,13 @@ changes. They live in the repository's **Settings** on GitHub, not in the code.
       contents" only, and require approval for workflows from outside contributors.
 - [ ] Turn on Dependabot alerts and security updates (Settings > Code security).
 - [ ] Turn on secret scanning and push protection.
-- [ ] Keep the repository private until you decide to publish it; make it public
-      only after reviewing the history for anything private.
+- [ ] Before every push to this public repository, run
+      `node scripts/prepush-check.mjs <this clone> --build` (from the private project) and
+      read its report; a push is visible immediately and cannot be fully undone.
+- [ ] Turn on Private vulnerability reporting (Settings > Code security) as an extra route
+      for `SECURITY.md`.
+- [ ] After each deploy, check the Actions tab: "Deploy to GitHub Pages" and then
+      "Post-deploy privacy check" should both be green.
 
 ## Before merging any change that touches dependencies or build files
 - [ ] Read the diff of `client/package.json` and `client/package-lock.json`.
