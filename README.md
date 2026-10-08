@@ -97,19 +97,6 @@ Each test starts with an empty browser, so tests never share data.
   light and dark mode. The theme and mode buttons are icon-only, at the top right
   of the toolbar; the last choice is remembered in the browser.
 
-## Deploying (GitHub Pages)
-
-The app is a plain static site, published to GitHub Pages by
-`.github/workflows/deploy-pages.yml` on every push to `main`. One-time setup:
-
-1. In the repository **Settings > Pages**, set **Source** to **GitHub Actions**.
-2. Set the **Custom domain** to `www.adhocdraw.com` and turn on **Enforce HTTPS**.
-3. At your DNS provider add a `CNAME` record: `www` pointing to `adhocdraw.github.io`.
-
-GitHub Pages cannot send custom HTTP headers, so the Content-Security-Policy is set
-in the page itself (a `<meta>` tag) and the app refuses to run inside another page
-(`client/public/frame-guard.js`). See [PRIVACY.md](PRIVACY.md).
-
 ## Contributing
 
 Code contributions are not being accepted for now, to keep the privacy promise easy
