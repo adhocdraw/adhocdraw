@@ -70,7 +70,7 @@ Each test starts with an empty browser, so tests never share data.
   to move it.
 
 **Editing**
-- **Shapes** opens the Shapes & Widgets dock (double-click a shape to add it):
+- **Shapes** opens the Shapes & Widgets dock (double-click, or on a touch screen tap, a shape to add it):
   sticky notes, text, frames, swimlanes, tables, UML classes, many shapes and
   custom SVG/PNG shapes. Drag from a node's edge handle to another node to draw
   a connector. Double-click a node to edit its text; select it to restyle,
@@ -91,6 +91,15 @@ Each test starts with an empty browser, so tests never share data.
   of the tab pane shows *Saved in browser / not saved to a file* until you use
   **Save to file** (Ctrl/Cmd+S), which writes a `.json` to your computer.
   **Open from file** loads one back.
+- **On a phone or tablet** (and in Firefox or desktop Safari) the browser has no file-save
+  dialog, so **Save to file** downloads a `.json` copy (Downloads folder or the Files
+  app) and each save makes a new file instead of overwriting the last. Only desktop
+  Chrome and Edge can save back to the same file. **Open from file** uses the device's
+  file picker, so save the file where you can find it again (Files, iCloud, Downloads).
+  Diagrams are kept per browser: Chrome and Safari on one phone do not share them, and
+  a mobile browser may clear a site's stored data after a while without a visit (about a
+  week on iPhone) or in a private tab, so save to a file for anything you want to keep.
+  Edits are written to the browser as soon as the page is hidden.
 
 **Look**
 - Two themes, **Classic** and **Palette** (an artist's-palette look), each in

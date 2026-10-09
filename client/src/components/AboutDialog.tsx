@@ -38,7 +38,7 @@ export default function AboutDialog({ onClose }: AboutDialogProps) {
           </p>
           <ul>
             <li>
-              Your work is saved in <em>your own browser</em> on this computer: diagrams, their version history and
+              Your work is saved in <em>your own browser</em> on this device: diagrams, their version history and
               added images, plus your preferences (theme, light or dark mode, tool settings).
             </li>
             <li>
@@ -46,6 +46,12 @@ export default function AboutDialog({ onClose }: AboutDialogProps) {
               <strong>Open from file</strong> loads it back. That file is your copy to keep. Save to a file
               regularly: clearing your browser data, or using a private window or another browser or device,
               removes the copy kept in your browser.
+            </li>
+            <li>
+              <strong>On a phone or tablet,</strong> Save to file downloads a copy (look in your Downloads folder or the
+              Files app), and each save makes a new file. Your browser may clear what it keeps for a site you have not
+              visited for a while, so save to a file to be safe. Chrome and Safari on the same phone keep separate
+              copies.
             </li>
           </ul>
           <p>
@@ -90,7 +96,7 @@ export default function AboutDialog({ onClose }: AboutDialogProps) {
               Open-source libraries &amp; licenses
             </a>
           </p>
-          <p className="about-updated">Privacy notice last updated: 7 October 2026.</p>
+          <p className="about-updated">Privacy notice last updated: 8 October 2026.</p>
           <p>
             The canvas is built with <a href="https://reactflow.dev" target="_blank" rel="noreferrer">React Flow</a>{" "}
             (MIT license), among other open-source libraries.

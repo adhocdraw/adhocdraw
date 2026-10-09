@@ -20,6 +20,8 @@ test.describe("Diagram templates", () => {
   test("a template is saved as a normal multi-page diagram", async ({ page }) => {
     const name = `tpl-paged-${Date.now()}`;
     await createFromTemplate(page, name, "Blank Chart");
+    // The rename is saved a moment after the tab shows it; wait for it to land.
+    await expect.poll(async () => !!(await readDiagram(page, name))).toBe(true);
     const diagram = (await readDiagram(page, name))!;
     expect(diagram.data.pages).toHaveLength(1);
     expect(diagram.data.pages[0].name).toBe("Page 1");
@@ -170,6 +172,8 @@ test.describe("Diagram templates", () => {
     await expect(page.locator(".save-status")).toHaveText(/Saved/, { timeout: 5000 });
 
     // Saved as a notebook, so notebook-only features can tell it apart later.
+    // The rename is saved a moment after the tab shows it; wait for it to land.
+    await expect.poll(async () => !!(await readDiagram(page, name))).toBe(true);
     const diagram = (await readDiagram(page, name))!;
     expect(diagram.data.kind).toBe("notebook");
     expect(diagram.data.background).toBe("lines");

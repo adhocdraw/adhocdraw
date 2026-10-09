@@ -192,7 +192,12 @@ export async function createDiagramFromMenu(page: Page, name: string, template =
 // Makes sure the floating Shapes & Widgets panel is open and expanded.
 export async function openShapesPanel(page: Page) {
   if (!(await page.locator(".shapes-panel").isVisible())) {
-    await page.locator(".shapes-toggle").click();
+    // On a phone the toolbar's Draw group is replaced by the tools panel in the canvas.
+    const toggle = page.locator(".shapes-toggle");
+    const library = page.getByRole("button", { name: "Shape library" });
+    await expect.poll(async () => (await toggle.isVisible()) || (await library.isVisible())).toBe(true);
+    if (await toggle.isVisible()) await toggle.click();
+    else await library.click();
   }
   await expect(page.locator(".shapes-panel")).toBeVisible();
 }
@@ -204,7 +209,10 @@ export async function addWidget(page: Page, label: string) {
   await expect(page.locator(".react-flow__node")).toHaveCount(before + 1);
   // The panel floats over the left of the canvas; tuck it away so it never
   // sits on top of anything a test does next (the next addWidget reopens it).
-  await page.locator(".shapes-dock-close").click();
+  // (On a phone there is no close button: the dock collapses to its edge tab instead.)
+  const close = page.locator(".shapes-dock-close");
+  if (await close.isVisible()) await close.click();
+  else await page.locator(".shapes-dock-collapse").click();
   // .last() is a live query - it would silently re-point to a different node
   // once more nodes are added later. Pin the new node by its stable data-id
   // instead, so the returned locator keeps identifying THIS node throughout

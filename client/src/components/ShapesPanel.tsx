@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useRef, useState } from "react";
+import type React from "react";
 import type { WidgetKind } from "../types";
 import type { CustomShape } from "../api";
 import { absoluteUrl } from "../api";
@@ -43,12 +44,25 @@ export default function ShapesPanel({
 }: ShapesPanelProps) {
   const [query, setQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // A mouse double-clicks a shape to add it; a finger or pen taps it. (A touch
+  // double-tap would otherwise add two.)
+  const lastPointerType = useRef("mouse");
+  const touchLike = () => lastPointerType.current === "touch" || lastPointerType.current === "pen";
+  const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  const addHandlers = (add: () => void) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      lastPointerType.current = e.pointerType;
+    },
+    onClick: () => touchLike() && add(),
+    onDoubleClick: () => !touchLike() && add(),
+    onKeyDown: (e: React.KeyboardEvent) => e.key === "Enter" && add(),
+  });
   const filtered = fuzzyRank(WIDGETS, (w) => w.label, query);
   const filteredCustom = fuzzyRank(customShapes, (s) => s.name, query);
 
   return (
     <div className="shapes-panel">
-      <div className="shapes-hint">Double-click a shape to add it</div>
+      <div className="shapes-hint">{coarse ? "Tap a shape to add it" : "Double-click a shape to add it"}</div>
       <input
         className="shapes-search"
         type="text"
@@ -75,9 +89,9 @@ export default function ShapesPanel({
           <button
             key={w.key}
             className="shape-btn"
-            title="Double-click to add"
-            onDoubleClick={() => onAdd(w.key)}
-            onKeyDown={(e) => e.key === "Enter" && onAdd(w.key)}
+            title={coarse ? "Tap to add" : "Double-click to add"}
+            aria-label={w.label}
+            {...addHandlers(() => onAdd(w.key))}
           >
             <span className="shape-btn-icon">{w.icon}</span>
             <span className="shape-btn-label">{w.label}</span>
@@ -87,9 +101,9 @@ export default function ShapesPanel({
           <button
             key={s.id}
             className="shape-btn"
-            title="Double-click to add"
-            onDoubleClick={() => onAddCustomShape(s.id)}
-            onKeyDown={(e) => e.key === "Enter" && onAddCustomShape(s.id)}
+            title={coarse ? "Tap to add" : "Double-click to add"}
+            aria-label={s.name}
+            {...addHandlers(() => onAddCustomShape(s.id))}
           >
             <img className="shape-btn-custom-icon" src={absoluteUrl(s.url)} alt="" />
             <span className="shape-btn-label">{s.name}</span>

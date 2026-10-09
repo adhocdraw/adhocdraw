@@ -99,7 +99,11 @@ test.describe("Content-Security-Policy and privacy notices", () => {
     await expect(dialog).toContainText("GitHub, which may keep ordinary server logs");
     await expect(dialog).toContainText("Browser extensions, shared computers");
     await expect(dialog).toContainText("If we get it wrong");
-    await expect(dialog).toContainText("Privacy notice last updated");
+    await expect(dialog).toContainText("Privacy notice last updated: 8 October 2026");
+    // Phones: where Save to file goes and that the browser may clear its copy.
+    await expect(dialog).toContainText("On a phone or tablet");
+    await expect(dialog).toContainText("Downloads folder or the Files app");
+    await expect(dialog).toContainText("may clear what it keeps");
     await expect(dialog).not.toContainText("developer tools");
     await expect(dialog).not.toContainText("Network tab");
     await expect(dialog.getByRole("link", { name: "Privacy details" })).toHaveAttribute("href", "./PRIVACY.txt");
@@ -135,7 +139,9 @@ test.describe("Content-Security-Policy and privacy notices", () => {
     expect(text).toContain("What the app cannot control");
     expect(text).toContain("If something is wrong");
     expect(text).toContain("For technical readers: how to verify this");
-    expect(text).toContain("Last updated");
+    expect(text).toContain("Last updated: 8 October 2026");
+    expect(text).toContain("Phones and tablets.");
+    expect(text).toContain("can clear what a site has stored");
   });
 
   test("the license files are shipped with the app", async ({ page }) => {

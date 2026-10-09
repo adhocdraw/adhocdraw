@@ -32,7 +32,10 @@ export default function ShapesDock({ collapsed, onToggleCollapsed, onClose, chil
           <span className={`shapes-dock-chevron ${collapsed ? "collapsed" : ""}`}>
             <Icon name="chevron" />
           </span>
-          <span className="shapes-dock-title">Shapes &amp; Widgets</span>
+          <span className="shapes-dock-title">
+            <span className="shapes-dock-title-full">Shapes &amp; Widgets</span>
+            <span className="shapes-dock-title-short">Shapes</span>
+          </span>
         </button>
         <button
           type="button"

@@ -153,6 +153,9 @@ const GRID_SIZE = 16;
 const RULE_GAP = 32;
 const TEXT_BOX_HEIGHT = 32;
 // Things on top of the canvas that a pencil stroke must never start on.
+// Zoom of a new, empty diagram on a phone.
+const PHONE_START_ZOOM = 0.25;
+
 const NOT_DRAWABLE_SELECTOR = [
   ".react-flow__controls",
   ".react-flow__minimap",
@@ -362,9 +365,20 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     }
     return fallback;
   };
+  // On a phone the Shapes dock starts collapsed to a slim bar (no saved choice yet).
+  const isPhone = () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 600px)").matches;
+  // Live version of the same query, for things that must appear/disappear as the screen changes.
+  const [phoneView, setPhoneView] = useState(isPhone);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onChange = () => setPhoneView(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const shapesPanelKeyRef = useRef("adhocdraw.shapesPanel");
   const [shapesPanel, setShapesPanelState] = useState<{ open: boolean; collapsed: boolean }>(() =>
-    readShapesPanel("adhocdraw.shapesPanel", { open: true, collapsed: false })
+    readShapesPanel("adhocdraw.shapesPanel", { open: true, collapsed: isPhone() })
   );
   // Not shown until the diagram has loaded and we know which kind it is (no flash
   // of the wrong default).
@@ -504,7 +518,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         (kindRef.current === undefined && loadedBackground !== "dots");
       shapesPanelKeyRef.current = board ? "adhocdraw.shapesPanel.board" : "adhocdraw.shapesPanel";
       setShapesPanelState(
-        readShapesPanel(shapesPanelKeyRef.current, board ? { open: false, collapsed: false } : { open: true, collapsed: false })
+        readShapesPanel(shapesPanelKeyRef.current, board ? { open: false, collapsed: false } : { open: true, collapsed: isPhone() })
       );
       setPanelsReady(true);
       setBackground(loadedBackground);
@@ -528,6 +542,9 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         // that one also fires the first time an empty canvas gets a node, which
         // yanked the first thing drawn on a new diagram to the center.
         setTimeout(() => fitViewRef.current(FIT_VIEW_OPTIONS), 50);
+      } else if (isPhone()) {
+        // An empty diagram on a phone starts zoomed out, so there is room to work.
+        setViewport({ x: 0, y: 0, zoom: PHONE_START_ZOOM });
       }
     });
   }, [diagramId, setNodes, setEdges, setViewport]);
@@ -623,6 +640,22 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   };
   useEffect(() => () => flushRef.current(), []);
 
+  // On a phone the browser can freeze or discard the page the moment you switch
+  // apps, so an edit still waiting out its 600 ms autosave delay is written out as
+  // soon as the page is hidden or closed.
+  useEffect(() => {
+    const flushNow = () => flushRef.current();
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushNow();
+    };
+    window.addEventListener("pagehide", flushNow);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flushNow);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   useEffect(() => {
     scheduleSave(name);
     // `scheduleSave`'s identity changes whenever `onSaved` does (a new
@@ -661,6 +694,9 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     kindRef.current === "whiteboard" ||
     kindRef.current === "notebook" ||
     (kindRef.current === undefined && background !== "dots");
+  // The floating tools panel: always on boards; on a phone also on charts, where it takes
+  // the place of the toolbar's Draw group.
+  const showToolsPanel = isBoard || phoneView;
   const isBoardRef = useRef(false);
   isBoardRef.current = isBoard;
 
@@ -1641,6 +1677,9 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         fileHandle ?? null
       );
       onFileHandleChange(handle ?? undefined);
+      // Without the File System Access API (phones, Firefox, Safari) "save" is a
+      // download, and the browser decides where it goes: say so.
+      if (!handle) showToast(`Downloaded ${name || "diagram"}.json - find it in your Downloads folder or the Files app.`);
       api
         .markSavedToFile(diagramId, fingerprint(payload.data))
         .then(() => onSaved())
@@ -1648,7 +1687,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     } catch {
       // User cancelled the save dialog - nothing to do.
     }
-  }, [name, diagramId, buildPagesData, customShapes, fileHandle, onFileHandleChange, onSaved]);
+  }, [name, diagramId, buildPagesData, customShapes, fileHandle, onFileHandleChange, onSaved, showToast]);
   saveToFileRef.current = exportToFile;
 
   // Where a newly added shape goes: just right of the last shape (or beside
@@ -1994,12 +2033,13 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     if (!isDrawing) return;
     const EDGE = 48; // px from the canvas edge where scrolling starts
     const MAX_SPEED = 16; // px per frame, right at the edge
-    const track = (e: MouseEvent) => {
+    const track = (e: PointerEvent) => {
       pointerRef.current = { x: e.clientX, y: e.clientY };
     };
     const release = () => finishStrokeRef.current();
-    window.addEventListener("mousemove", track);
-    window.addEventListener("mouseup", release);
+    window.addEventListener("pointermove", track);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
     let raf = 0;
     const tick = () => {
       const rect = document.querySelector(".canvas-flow")?.getBoundingClientRect();
@@ -2021,17 +2061,35 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", track);
-      window.removeEventListener("mouseup", release);
+      window.removeEventListener("pointermove", track);
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
     };
   }, [isDrawing, getViewport, setViewport, screenToFlowPosition]);
 
+  // Pointer events (not mouse events) so a finger or pen draws too: a touch drag
+  // fires no mouse events. While the pencil is on, the canvas must not pan or
+  // scroll under the finger, so the pane's own one-finger pan is stopped.
+  const handleCanvasTouchStartCapture = useCallback(
+    (e: React.TouchEvent) => {
+      if (!pencilActive || spaceHeldRef.current || e.touches.length !== 1) return;
+      if (e.target instanceof Element && e.target.closest(NOT_DRAWABLE_SELECTOR)) return;
+      e.stopPropagation();
+    },
+    [pencilActive]
+  );
+
   const handleCanvasMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (!pencilActive || e.button !== 0 || spaceHeldRef.current) return;
+    (e: React.PointerEvent) => {
+      if (!pencilActive || e.button !== 0 || !e.isPrimary || spaceHeldRef.current) return;
       // Floating panels, buttons and form controls sit inside the canvas area
       // too; pressing on them (e.g. the pencil palette) must not start a stroke.
       if (e.target instanceof Element && e.target.closest(NOT_DRAWABLE_SELECTOR)) return;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // capture is only a convenience (keeps the stroke when the finger leaves the canvas)
+      }
       pointerRef.current = { x: e.clientX, y: e.clientY };
       setIsDrawing(true);
       drawPointsRef.current = [screenToFlowPosition({ x: e.clientX, y: e.clientY })];
@@ -2041,7 +2099,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   );
 
   const handleCanvasMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       if (!pencilActive || !isDrawing) return;
       drawPointsRef.current.push(screenToFlowPosition({ x: e.clientX, y: e.clientY }));
       setPreviewTick((t) => t + 1);
@@ -2189,7 +2247,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   const selectedEdges = edges.filter((e) => e.selected);
 
   return (
-    <div className={`canvas-area ${presenting ? "presenting" : ""} ${focusMode ? "focus" : ""}`}>
+    <div className={`canvas-area ${presenting ? "presenting" : ""} ${focusMode ? "focus" : ""} ${isBoard ? "is-board" : ""} ${showToolsPanel ? "has-tools-panel" : ""}`}>
       <div className="canvas-header">
         <div className="canvas-header-top">
           <a className="brand" href={SITE_URL} target="_blank" rel="noopener noreferrer" title="AdhocDraw website"><Logo /></a>
@@ -2208,7 +2266,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
             >
               <Icon name="palette" />
             </button>
-            <button onClick={() => setShortcutsOpen(true)} title="Show keyboard shortcuts (?)" aria-label="Shortcuts">
+            <button className="shortcuts-btn" onClick={() => setShortcutsOpen(true)} title="Show keyboard shortcuts (?)" aria-label="Shortcuts">
               <Icon name="keyboard" />
             </button>
             <button
@@ -2361,6 +2419,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
             </button>
           )}
           <button
+            className="present-btn"
             title="Present: show the diagram full screen (Esc to exit)"
             aria-label="Present"
             onClick={startPresentation}
@@ -2377,9 +2436,11 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         className={`canvas-flow ${pencilActive ? "canvas-flow-drawing" : ""} ${selectModeActive ? "canvas-flow-selecting" : ""} ${textToolActive ? "canvas-flow-texting" : ""} ${handModeActive ? "canvas-flow-hand" : ""} ${pencilActive && spaceHeld ? "canvas-flow-panning" : ""}`}
         onDrop={handleCanvasDrop}
         onDragOver={handleCanvasDragOver}
-        onMouseDown={handleCanvasMouseDown}
-        onMouseMove={handleCanvasMouseMove}
-        onMouseUp={handleCanvasMouseUp}
+        onPointerDown={handleCanvasMouseDown}
+        onPointerMove={handleCanvasMouseMove}
+        onPointerUp={handleCanvasMouseUp}
+        onPointerCancel={handleCanvasMouseUp}
+        onTouchStartCapture={handleCanvasTouchStartCapture}
         onDoubleClick={handleCanvasDoubleClick}
       >
         <svg width="0" height="0" style={{ position: "absolute" }} data-marker-defs>
@@ -2746,7 +2807,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
             />
           )}
         </AnimatePresence>
-        {!presenting && isBoard && (
+        {!presenting && showToolsPanel && (
           <ToolsPanel
             tools={[
               {
@@ -2817,15 +2878,19 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
                 active: gridSnapEnabled,
                 onClick: () => setGridSnapEnabled((v) => !v),
               },
-              {
-                key: "focus",
-                icon: "focusEdit",
-                label: "Edit full screen",
-                tip: "Focus mode: edit full screen (F)",
-                active: focusMode,
-                onClick: () => setFocusMode((f) => !f),
-                separatorBefore: true,
-              },
+              ...(isBoard
+                ? [
+                    {
+                      key: "focus",
+                      icon: "focusEdit" as const,
+                      label: "Edit full screen",
+                      tip: "Focus mode: edit full screen (F)",
+                      active: focusMode,
+                      onClick: () => setFocusMode((f) => !f),
+                      separatorBefore: true,
+                    },
+                  ]
+                : []),
               {
                 key: "present",
                 icon: "present",
@@ -2833,6 +2898,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
                 tip: "Present: show the board full screen (Esc to exit)",
                 active: false,
                 onClick: startPresentation,
+                separatorBefore: !isBoard,
               },
             ]}
           />

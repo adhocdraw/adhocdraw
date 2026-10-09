@@ -4635,3 +4635,266 @@ html, body, #root {
 .about-logo { margin: 0 0 12px; }
 
 .about-updated { font-size: 12px; opacity: 0.7; }
+
+/* Touch: no double-tap zoom delay, no iOS press-and-hold callout / text selection
+   on the canvas (long-press opens the app's own context menu), and no browser
+   panning under a finger while the pencil is drawing. */
+html, body {
+  touch-action: manipulation;
+}
+.canvas-flow {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.canvas-flow input,
+.canvas-flow textarea,
+.canvas-flow [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.canvas-flow-drawing,
+.canvas-flow-drawing * {
+  touch-action: none;
+}
+/* ...but the floating panels on top of the canvas still scroll and tap normally. */
+.canvas-flow-drawing [data-draggable-panel],
+.canvas-flow-drawing [data-draggable-panel] * { touch-action: manipulation; }
+.canvas-flow-drawing .tools-panel,
+.canvas-flow-drawing .tools-panel * { touch-action: pan-x; }
+
+/* ---- phones (600px and narrower) ---- */
+@media (max-width: 600px) {
+  /* Toolbar: one swipeable row instead of four wrapped rows. */
+  .canvas-header {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding-top: 16px !important;
+  }
+  .canvas-header::-webkit-scrollbar { display: none; }
+  .canvas-header > *,
+  .canvas-header .toolbar-cluster,
+  .canvas-header .canvas-header-meta { flex: 0 0 auto; }
+  .canvas-header .canvas-header-meta { margin-left: 0 !important; }
+
+  /* Shapes dock: a narrow column down the left edge, shapes only (no labels, search
+     or "add custom shape"), one below the other and close together. It stops above
+     the tools panel at the bottom. */
+  .shapes-dock {
+    left: 8px !important;
+    right: auto !important;
+    top: 8px !important;
+    bottom: auto !important;
+    width: auto !important;
+    transform: none !important;
+    max-height: calc(100% - 80px) !important;
+    border-radius: 12px;
+  }
+  /* Pencil options span the top of the canvas: start the column below them. */
+  .canvas-flow-drawing .shapes-dock {
+    top: 132px !important;
+    max-height: calc(100% - 204px) !important;
+  }
+  .shapes-dock-header,
+  .app.theme-palette .shapes-dock-header { padding: 2px 4px; gap: 2px; justify-content: center; }
+  .shapes-dock-header .panel-grip,
+  .shapes-dock-title { display: none; }
+  .shapes-dock-collapse { flex: 0 0 auto; padding: 4px; }
+  .shapes-dock-btn { padding: 3px 5px; }
+  .shapes-dock-body,
+  .app.theme-palette .shapes-dock-body { padding: 4px; }
+  .shapes-hint,
+  .shapes-search,
+  .custom-shape-upload-btn { display: none !important; }
+  .shapes-panel { gap: 0; }
+  .shapes-grid,
+  .app.theme-palette .shapes-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 3px !important;
+  }
+  .shapes-grid .shape-btn-label { display: none; }
+  .shapes-grid .shape-btn,
+  .app.theme-palette .shapes-grid > .shape-btn {
+    justify-content: center;
+    width: 38px;
+    height: 34px;
+    padding: 0;
+    min-width: 0;
+    gap: 0;
+    border-radius: 8px;
+  }
+  .shapes-grid .shape-btn-icon { font-size: 18px; line-height: 1; }
+  .shapes-grid .shape-btn-custom-icon { width: 20px; height: 20px; }
+  .app.theme-palette .shapes-grid > .shape-btn::after,
+  .app.theme-palette .shapes-grid > .shape-btn::before { display: none; }
+
+  /* Collapsed: a tab on the left edge with a vertical "Shapes" label. Expanded: the
+     collapse bar on top (no close button; the tools panel's Shapes button hides it). */
+  .shapes-dock { --dock-bg: var(--ui-surface); }
+  .app.theme-palette .shapes-dock { --dock-bg: var(--pal-board); }
+  .shapes-dock-close { display: none !important; }
+  .shapes-dock-collapse { width: 100%; justify-content: center; }
+  .shapes-dock.collapsed {
+    left: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 14px 14px 0 !important;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+  .shapes-dock.collapsed .shapes-dock-header { padding: 6px 2px !important; }
+  .shapes-dock.collapsed .shapes-dock-collapse { flex-direction: column; gap: 6px; padding: 4px 6px; }
+  .shapes-dock.collapsed .shapes-dock-title {
+    display: block !important;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .shapes-dock .shapes-dock-title-full { display: none; }
+  .shapes-dock .shapes-dock-title-short { display: inline; }
+
+  /* Soft shadows at the top / bottom edge of the column while it can scroll further. */
+  .shapes-dock-body {
+    background:
+      linear-gradient(var(--dock-bg) 30%, transparent) center top / 100% 24px no-repeat local,
+      linear-gradient(transparent, var(--dock-bg) 70%) center bottom / 100% 24px no-repeat local,
+      radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.22), transparent) center top / 100% 8px no-repeat scroll,
+      radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.22), transparent) center bottom / 100% 8px no-repeat scroll;
+  }
+  .shape-btn:active { transform: scale(0.92); }
+
+  /* Slides in from the left when it opens or expands. */
+  @media (prefers-reduced-motion: no-preference) {
+    .shapes-dock { animation: shapes-dock-in 0.18s ease-out; }
+    .shapes-dock-body { animation: shapes-dock-in 0.18s ease-out; }
+  }
+
+  /* The tools panel now carries Focus and Present too: fit it to the screen
+     (it scrolls sideways if a very narrow screen still cannot hold it). */
+  .tools-panel,
+  .app.theme-palette .tools-panel {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    gap: 2px;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tools-panel::-webkit-scrollbar { display: none; }
+  .tools-panel > * { flex: 0 0 auto; }
+  .tool-panel-btn { width: 30px; height: 30px; }
+  .tools-panel .tools-sep { margin: 4px 0; }
+
+  /* White Boards and Notebooks: the tools panel in the canvas already has the draw
+     tools, Focus and Present, so the toolbar drops its Draw group and those two. */
+  .canvas-area.has-tools-panel .toolbar-cluster:has(> .group-draw),
+  .canvas-area.has-tools-panel .group-view .focus-mode-btn,
+  .canvas-area.has-tools-panel .group-view .present-btn { display: none; }
+
+  /* Keyboard shortcuts help: there is no keyboard on a phone. */
+  .canvas-header .shortcuts-btn { display: none !important; }
+
+
+  /* The page is as tall as the visible screen (100vh runs under the browser's
+     bottom bar on iPhones, hiding the zoom controls). */
+  .app { height: 100dvh; }
+
+  /* Swiping the toolbar sideways: allow the horizontal pan explicitly. */
+  .canvas-header,
+  .canvas-header * { touch-action: pan-x; }
+  .canvas-header {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 20px !important;
+  }
+
+  /* The minimap would cover half the screen. */
+  .react-flow__minimap { display: none; }
+
+  /* The save status takes only the room it needs, so the diagram tab keeps its width. */
+  .diagram-tabs-status,
+  .app.theme-palette .diagram-tabs-status { width: auto; min-width: 0; padding: 0 8px 0 4px; }
+
+  /* Palette: keep the tube caps inside the 2-column cards. */
+  .app.theme-palette .shapes-grid > .shape-btn:hover { transform: none; }
+
+  /* Pencil options: colour presets get the whole first row; labels become icons. */
+  .pencil-panel,
+  .app.theme-palette .pencil-panel,
+  .app.theme-palette.dark .pencil-panel {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 8px 12px;
+    max-width: calc(100% - 16px);
+    box-sizing: border-box;
+  }
+  /* First row: colour presets close together, then Auto, the colour picker and
+     notebook lines; thickness, opacity and line style follow on the next row. */
+  .pencil-panel .color-swatches,
+  .app.theme-palette .pencil-panel .color-swatches {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+  .app.theme-palette .pencil-panel .color-swatches { gap: 4px; }
+  .app.theme-palette .pencil-panel .color-swatch { width: 19px; height: 19px; }
+  .app.theme-palette .pencil-panel,
+  .app.theme-palette.dark .pencil-panel { padding: 8px 10px; column-gap: 6px; }
+  .pencil-panel .pencil-auto { padding: 4px 7px; font-size: 12px; }
+  .pencil-panel .pencil-field-color input[type="color"] { width: 28px; padding: 0; }
+  .pencil-panel { column-gap: 8px; }
+  .pencil-panel .pencil-label,
+  .pencil-panel .pencil-text { display: none; }
+  .pencil-panel .pencil-label-icon { display: inline-flex; }
+  .pencil-panel .pencil-field { display: inline-flex; align-items: center; gap: 4px; }
+  .pencil-panel input[type="range"],
+  .app.theme-palette .pencil-panel input[type="range"] { width: 56px; }
+  .pencil-panel .pencil-value { min-width: 0; }
+  .pencil-panel select { max-width: none; flex: 1; min-width: 0; }
+  .pencil-panel .pencil-field:has(select) { flex: 1 1 90px; min-width: 0; }
+  /* The panel spans the screen width (so everything fits in few rows). */
+  .pencil-panel,
+  .canvas-area.focus .pencil-panel {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+  }
+  .canvas-area.focus .pencil-panel { top: 60px !important; }
+  .pencil-panel .pencil-notebook { padding: 4px 8px; }
+  .pencil-panel .pencil-notebook .toolbar-icon { margin-right: 0; }
+}
+
+/* Pencil option icons stand in for the words on phones only. */
+.pencil-label-icon { display: none; }
+
+/* Focus (full screen) mode: the save status sits in the bottom row, left of the
+   zoom controls, instead of floating over the drawing palette. */
+.canvas-area.focus .diagram-tabs-wrap {
+  bottom: 0;
+  left: auto;
+  right: var(--focus-zoom-width, 190px);
+  height: 42px;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.app.theme-palette .canvas-area.focus .diagram-tabs-wrap { background: transparent; box-shadow: none; }
+.canvas-area.focus .canvas-footer .page-tabs { margin-right: var(--focus-status-width, 130px); }
+@media (max-width: 600px) {
+  .canvas-area.focus .focus-diagram-name { display: none; }
+}
+
+/* The short "Shapes" label is for the phone tab only. */
+.shapes-dock-title-short { display: none; }
+@keyframes shapes-dock-in {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}

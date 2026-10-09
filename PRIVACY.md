@@ -41,6 +41,13 @@ are listed below.**
   and cloud-synced folders you save files into are copied by their provider. A website
   cannot block these. Only install extensions you trust, and clear the site's data on a
   shared computer.
+- **Phones and tablets.** Mobile browsers can clear what a site has stored if you have
+  not visited it for a while (iPhone browsers, which all use Apple's engine, can do this
+  after about a week) or when the device runs low on space, and private tabs keep
+  nothing. Chrome and Safari on the same device keep separate copies. **Save to File**
+  downloads a copy on these devices (each save makes a new file; the browser decides
+  where it goes, usually Downloads or the Files app), so save to a file to keep your
+  work.
 - **Software we depend on.** AdhocDraw is built from open-source libraries that we
   review and check before each release. Like any software, a flaw or a change we missed
   is possible.
@@ -85,4 +92,4 @@ licenses, in `client/THIRD_PARTY_LICENSES.txt` (shipped as
 If this notice changes, the new version is published here and the history is in the
 repository.
 
-Last updated: 7 October 2026.
+Last updated: 8 October 2026.

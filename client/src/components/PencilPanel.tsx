@@ -85,8 +85,8 @@ export default function PencilPanel({
       >
         Auto
       </button>
-      <label>
-        Color
+      <label className="pencil-field pencil-field-color">
+        <span className="pencil-label">Color</span>
         <input
           type="color"
           value={options.color}
@@ -104,11 +104,12 @@ export default function PencilPanel({
           onClick={notebookLines.onToggle}
         >
           <Icon name="ruled" />
-          Notebook lines
+          <span className="pencil-text">Notebook lines</span>
         </button>
       )}
-      <label>
-        Thickness
+      <label className="pencil-field" title="Thickness">
+        <span className="pencil-label">Thickness</span>
+        <span className="pencil-label-icon"><Icon name="thickness" /></span>
         <input
           type="range"
           min={1}
@@ -119,8 +120,9 @@ export default function PencilPanel({
         />
         <span className="pencil-value">{options.size}px</span>
       </label>
-      <label>
-        Opacity
+      <label className="pencil-field" title="Opacity">
+        <span className="pencil-label">Opacity</span>
+        <span className="pencil-label-icon"><Icon name="opacity" /></span>
         <input
           type="range"
           min={10}
@@ -132,8 +134,9 @@ export default function PencilPanel({
         />
         <span className="pencil-value">{Math.round(options.opacity * 100)}%</span>
       </label>
-      <label>
-        Line
+      <label className="pencil-field" title="Line style">
+        <span className="pencil-label">Line</span>
+        <span className="pencil-label-icon"><Icon name="linestyle" /></span>
         <select
           value={options.style}
           aria-label="Pencil line style"

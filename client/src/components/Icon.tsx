@@ -170,6 +170,24 @@ const PATHS = {
       <path d="M21 21l-5-5" />
     </>
   ),
+  thickness: (
+    <>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" strokeWidth="3.5" />
+      <path d="M4 19h16" strokeWidth="6" />
+    </>
+  ),
+  opacity: (
+    <>
+      <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />
+      <path d="M12 3v17" />
+    </>
+  ),
+  linestyle: (
+    <>
+      <path d="M3 17c3-9 5-9 7-3s4 6 11-8" />
+    </>
+  ),
   present: (
     <>
       <rect x="3" y="4" width="18" height="12" rx="2" />
