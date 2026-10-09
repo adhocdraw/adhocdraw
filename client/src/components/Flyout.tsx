@@ -4,6 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface FlyoutProps {
   label: ReactNode;
@@ -46,7 +47,9 @@ export default function Flyout({ label, children, panelClassName, title, ariaLab
   useEffect(() => {
     if (!open) return;
     const handleDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
     };
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -72,11 +75,15 @@ export default function Flyout({ label, children, panelClassName, title, ariaLab
       >
         {label}
       </button>
-      {open && (
-        <div ref={panelRef} className={`flyout-panel ${panelClassName ?? ""}`} style={pos}>
-          {children(() => setOpen(false))}
-        </div>
-      )}
+      {open &&
+        // Rendered inside the app root but outside the toolbar, so the toolbar's own
+        // scrolling, clipping and stacking cannot hide or cover it (it did, on phones).
+        createPortal(
+          <div ref={panelRef} className={`flyout-panel ${panelClassName ?? ""}`} style={pos}>
+            {children(() => setOpen(false))}
+          </div>,
+          rootRef.current?.closest(".app") ?? document.body
+        )}
     </div>
   );
 }

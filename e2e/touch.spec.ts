@@ -314,4 +314,48 @@ test.describe("Touch screens", () => {
     await expect(dock).toHaveClass(/collapsed/);
   });
 
+
+  for (const palette of [false, true]) {
+    test(`on a phone the File menus (New, Export) open in front of everything and fully on screen${palette ? " (Palette theme)" : ""}`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      if (palette) {
+        await page.getByRole("button", { name: /palette|theme/i }).first().tap();
+        await expect(page.locator(".app")).toHaveClass(/theme-palette/);
+      }
+      const vp = page.viewportSize()!;
+      const check = async () => {
+        const panel = page.locator(".flyout-panel");
+        await expect(panel).toBeVisible();
+        const box = (await panel.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(vp.width);
+        expect(box.y + box.height).toBeLessThanOrEqual(vp.height);
+        // The middle and the inner corners of the menu belong to the menu, not to something drawn over it.
+        const onTop = await page.evaluate(
+          ({ x, y, w, h }) =>
+            [
+              [x + w / 2, y + h / 2],
+              // (inset, since the Palette theme's panel has very round corners)
+              [x + 24, y + 24],
+              [x + w - 24, y + 24],
+              [x + 24, y + h - 24],
+              [x + w - 24, y + h - 24],
+            ].every(([px, py]) => !!document.elementFromPoint(px, py)?.closest(".flyout-panel")),
+          { x: box.x, y: box.y, w: box.width, h: box.height }
+        );
+        expect(onTop).toBe(true);
+      };
+      await page.getByRole("button", { name: /^New/ }).tap();
+      await check();
+      await page.locator(".flyout-item", { hasText: /^Blank Chart$/ }).tap();
+      await expect(page.locator(".flyout-panel")).toHaveCount(0);
+      await page.getByRole("button", { name: "Export" }).tap();
+      await check();
+      // Tapping outside closes it again.
+      await page.locator(".canvas-flow").tap({ position: { x: 200, y: 300 } });
+      await expect(page.locator(".flyout-panel")).toHaveCount(0);
+    });
+  }
 });

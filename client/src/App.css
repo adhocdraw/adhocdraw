@@ -4810,7 +4810,6 @@ html, body {
   .canvas-header * { touch-action: pan-x; }
   .canvas-header {
     overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
     padding-right: 20px !important;
   }
 
