@@ -38,6 +38,7 @@ export default function App() {
   const [selectModeActive, setSelectModeActive] = useState(false);
   const [textToolActive, setTextToolActive] = useState(false);
   const [handModeActive, setHandModeActive] = useState(false);
+  const [eraserActive, setEraserActive] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   // The local file handle a diagram was opened from (via "Open from file…"),
   // if any and if the browser supports the File System Access API - lets
@@ -91,6 +92,7 @@ export default function App() {
       setSelectModeActive(false);
       setTextToolActive(false);
       setHandModeActive(false);
+      setEraserActive(false);
       setPencilActive(true);
     }
   };
@@ -138,6 +140,7 @@ export default function App() {
   };
 
   const handleTogglePencil = () => {
+    setEraserActive(false);
     setSelectModeActive(false);
     setTextToolActive(false);
     setHandModeActive(false);
@@ -145,6 +148,7 @@ export default function App() {
   };
 
   const handleToggleSelectMode = () => {
+    setEraserActive(false);
     setPencilActive(false);
     setTextToolActive(false);
     setHandModeActive(false);
@@ -152,13 +156,23 @@ export default function App() {
   };
 
   const handleToggleTextTool = () => {
+    setEraserActive(false);
     setPencilActive(false);
     setSelectModeActive(false);
     setHandModeActive(false);
     setTextToolActive((a) => !a);
   };
 
+  const handleToggleEraser = () => {
+    setPencilActive(false);
+    setSelectModeActive(false);
+    setTextToolActive(false);
+    setHandModeActive(false);
+    setEraserActive((a) => !a);
+  };
+
   const handleToggleHandMode = () => {
+    setEraserActive(false);
     setPencilActive(false);
     setSelectModeActive(false);
     setTextToolActive(false);
@@ -212,6 +226,7 @@ export default function App() {
                   setSelectModeActive(false);
                   setTextToolActive(false);
                   setHandModeActive(false);
+                  setEraserActive(false);
                   setPencilActive(true);
                 }
               }}
@@ -223,6 +238,9 @@ export default function App() {
               pencilActive={pencilActive}
               onExitPencilMode={() => setPencilActive(false)}
               onTogglePencil={handleTogglePencil}
+              eraserActive={eraserActive}
+              onExitEraser={() => setEraserActive(false)}
+              onToggleEraser={handleToggleEraser}
               handModeActive={handModeActive}
               onExitHandMode={() => setHandModeActive(false)}
               onToggleHandMode={handleToggleHandMode}

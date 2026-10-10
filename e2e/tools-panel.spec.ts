@@ -35,8 +35,8 @@ test.describe("Icon-only tools panel", () => {
     const panel = page.getByRole("group", { name: "Tool panel" });
     await expect(panel).toBeVisible();
     const buttons = panel.getByRole("button");
-    await expect(buttons).toHaveCount(10);
-    for (let i = 0; i < 10; i++) {
+    await expect(buttons).toHaveCount(11);
+    for (let i = 0; i < 11; i++) {
       expect(((await buttons.nth(i).textContent()) ?? "").trim()).toBe("");
       await expect(buttons.nth(i).locator("svg.toolbar-icon")).toHaveCount(1);
     }

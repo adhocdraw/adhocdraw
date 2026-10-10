@@ -26,7 +26,7 @@ test.describe("Toolbar grouping and visibility", () => {
     const app = page.getByRole("group", { name: "App" });
 
     expect(await names(file)).toEqual(["New", "Open from file", "Save to file", "Export"]);
-    expect(await names(draw)).toEqual(["Shapes", "Hand", "Select", "Pencil", "Text", "Snap to grid"]);
+    expect(await names(draw)).toEqual(["Shapes", "Hand", "Select", "Pencil", "Eraser", "Text", "Snap to grid"]);
     // History, Find and Present are icon-only: names come from their aria-labels.
     expect(await labels(view)).toEqual(["History", "Find", "Present"]);
     expect(await labels(app)).toEqual(["Dark mode", "Theme: Classic", "Shortcuts", "AdhocDraw on GitHub", "About"]);
@@ -184,7 +184,7 @@ test.describe("Responsive toolbar: labels give way to icons when there is no roo
   test("wide window: every toolbar button shows its label, including the View group", async ({ diagramPage: page }) => {
     await page.setViewportSize({ width: 1900, height: 800 });
     expect(await visibleLabels(page, "View and present")).toEqual(["History", "Find", "Present"]);
-    expect(await visibleLabels(page, "Draw")).toEqual(["Shapes", "Hand", "Select", "Pencil", "Text", "Snap to grid"]);
+    expect(await visibleLabels(page, "Draw")).toEqual(["Shapes", "Hand", "Select", "Pencil", "Eraser", "Text", "Snap to grid"]);
     expect((await visibleLabels(page, "File")).length).toBe(4);
     // One row.
     expect((await page.locator(".canvas-header").boundingBox())!.height).toBeLessThan(80);

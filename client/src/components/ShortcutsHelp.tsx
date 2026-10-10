@@ -26,6 +26,7 @@ const SHORTCUTS: [string, string][] = [
   ["Ctrl/Cmd + F", "Find / Replace"],
   ["T", "Text tool: click the canvas and type"],
   ["H", "Hand tool: drag the canvas to move around"],
+  ["E", "Eraser: drag over drawings to remove them"],
   ["F", "Focus mode on a White Board or Notebook: edit full screen"],
   ["F2", "Rename the open diagram"],
   ["Double-click empty canvas", "Add text there and type"],

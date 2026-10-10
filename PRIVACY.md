@@ -47,7 +47,9 @@ are listed below.**
   nothing. Chrome and Safari on the same device keep separate copies. **Save to File**
   downloads a copy on these devices (each save makes a new file; the browser decides
   where it goes, usually Downloads or the Files app), so save to a file to keep your
-  work.
+  work. Adding the site to your
+  Home Screen only gives it an app icon: it is the same website, kept in the same browser
+  storage, and it needs a connection to open.
 - **Software we depend on.** AdhocDraw is built from open-source libraries that we
   review and check before each release. Like any software, a flaw or a change we missed
   is possible.
@@ -92,4 +94,4 @@ licenses, in `client/THIRD_PARTY_LICENSES.txt` (shipped as
 If this notice changes, the new version is published here and the history is in the
 repository.
 
-Last updated: 8 October 2026.
+Last updated: 9 October 2026.

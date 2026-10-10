@@ -12,7 +12,9 @@ describe where the software comes from, and a modified version should not be
 presented as the official AdhocDraw.
 
 Logo: the AdhocDraw logo and icon files (client/public/logo.svg,
-client/public/logo-dark.svg and client/public/favicon.svg) are not part of the
+client/public/logo-dark.svg, client/public/favicon.svg and the app icons
+client/public/apple-touch-icon.png, icon-192.png, icon-512.png and
+icon-maskable-512.png) are not part of the
 software licensed under the Apache License. They are Copyright 2026 Vikranth
 Pandiri, all rights reserved. They may not be copied, modified or reused, other
 than as shipped with an unmodified AdhocDraw, without permission. Forks should

@@ -60,9 +60,13 @@ Each test starts with an empty browser, so tests never share data.
 
 **Creating diagrams**
 - **New** (toolbar) offers *Blank Chart*, *White Board* (pencil on, notebook
-  ruled lines) and *Notebook* (starts as a copy of the White Board; notebook-only
-  features are planned). A new diagram is named after the option you used:
-  Chart 1, White Board 1, Notebook 1, ...
+  ruled lines) and *Notebook*. A White Board is an infinite canvas; a Notebook is a
+  **page**: a sheet of paper of fixed width (with the ruled lines and a margin
+  line) on a grey desk that scrolls up and down only, never sideways and never above
+  the top. It opens fitted to the screen's width (so on a phone there is nothing to
+  scroll sideways), the mouse wheel scrolls it (Ctrl/Cmd + wheel, or pinching, zooms),
+  and shapes cannot be dragged off the page. A new diagram is named after the option
+  you used: Chart 1, White Board 1, Notebook 1, ...
 - Diagram tabs run along the top; double-click a tab name, or press **F2**, to
   rename the open diagram. The **AdhocDraw** logo at the top left links to the
   website. Each diagram can have several **pages**, in the pages bar at the
@@ -76,11 +80,14 @@ Each test starts with an empty browser, so tests never share data.
   a connector. Double-click a node to edit its text; select it to restyle,
   resize or delete (Backspace/Delete).
 - On a White Board or Notebook, a floating **tool panel** has Undo and Redo, then
-  Shapes, Hand (pan), Select, Pencil, Text, Snap to grid, and Focus (full-screen
+  Shapes, Hand (pan), Select, Pencil, Eraser, Text, Snap to grid, and Focus (full-screen
   editing, `F`) and Present. In focus mode the diagram name shows at the bottom left.
 - **Pencil** draws freehand (colour, thickness, opacity and line style in its
-  panel; hold Space or push to the canvas edge to scroll). **Select** drags a
-  selection box. **Snap to grid** (on by default) is in the Draw group.
+  panel; hold Space or push to the canvas edge to scroll). **Eraser** (`E`; also in the
+  Draw group) removes a drawing when you drag over it (shapes are left alone; undo
+  brings it back). With an Apple Pencil or other stylus, the first pen touch switches
+  the page into pen mode: the pen draws or erases and a finger scrolls the page (palm
+  rejection); without a pen, a finger draws. **Select** drags a selection box. **Snap to grid** (on by default) is in the Draw group.
 - **History** (version history), **Find** (find and replace) and **Present**
   (full-screen slideshow of the pages) are in the View group; press `?` for all
   keyboard shortcuts.
@@ -100,6 +107,17 @@ Each test starts with an empty browser, so tests never share data.
   a mobile browser may clear a site's stored data after a while without a visit (about a
   week on iPhone) or in a private tab, so save to a file for anything you want to keep.
   Edits are written to the browser as soon as the page is hidden.
+
+**Install as an app (optional)**
+- AdhocDraw is a normal website that can also sit on your Home Screen like an app. On an
+  iPhone or iPad, open www.adhocdraw.com in **Safari**, tap **Share**, then **Add to Home
+  Screen**. On Android, use Chrome's menu: **Install app** or **Add to Home screen**. In
+  desktop Chrome or Edge, use the install icon in the address bar. Nothing is
+  downloaded from an app store, and there is no account.
+- It is the same site, with the same browser storage and the same privacy: the app still
+  needs a connection to open (there is no service worker, so no offline start), and it
+  sends nothing about your diagrams. An installed copy on iPhone is also less likely to
+  have its stored data cleared than a Safari tab.
 
 **Look**
 - Two themes, **Classic** and **Palette** (an artist's-palette look), each in
@@ -126,7 +144,8 @@ The name "AdhocDraw" and any AdhocDraw logo are not covered by the Apache Licens
 and modify the code under the license, but please give a modified version its own
 name and do not present it as the official AdhocDraw.
 
-The logo and icon files (`client/public/logo.svg`, `client/public/logo-dark.svg` and
-`client/public/favicon.svg`)
+The logo and icon files (`client/public/logo.svg`, `client/public/logo-dark.svg`,
+`client/public/favicon.svg` and the app icons `apple-touch-icon.png`, `icon-192.png`,
+`icon-512.png` and `icon-maskable-512.png`)
 are not part of the Apache-licensed code. All rights are reserved; please do not
 copy or reuse them. Forks should remove them and use their own name and logo.

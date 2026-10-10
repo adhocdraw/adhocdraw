@@ -52,3 +52,22 @@ review from Code Owners" (see `.github/CODEOWNERS`).
 - [ ] For a new library: check its licence (MIT or Apache-2.0), read what it does,
       and add it to `client/scripts/privacy-allowed-dependencies.json` on purpose.
 - [ ] Run the Playwright suite (`npx playwright test`).
+
+## Releases
+A release is a version marker (tag plus notes); deploying the site happens on every push
+to `main` and does not need one. Versions follow Semantic Versioning, `vMAJOR.MINOR.PATCH`:
+patch for fixes only (`v1.0.1`), minor for new features that keep saved files working
+(`v1.1.0`), major for a change that breaks something (`v2.0.0`).
+
+- [ ] When a batch of work is on `main`, the checks are green and the notes are ready, tag
+      that commit and push the tag: `git tag v1.1.0 && git push origin v1.1.0`. Tag only
+      after the tests pass: release immutability means a published tag cannot be moved.
+- [ ] The workflow `.github/workflows/draft-release.yml` builds the app (with the privacy
+      check) and creates a **draft** release with generated notes. It never publishes.
+      Watch its first run in the Actions tab.
+- [ ] Open the draft (Releases), replace or edit the generated notes (they come from commit
+      messages; the local `pending/release_notes_*.md` drafts are usually better),
+      check it is a normal release and marked **Latest**, then **Publish**. Published
+      releases cannot be edited, so read it first.
+- [ ] The workflow asks for `contents: write` for itself only; keep the repository default
+      (Settings > Actions > General) at read-only.

@@ -51,7 +51,8 @@ export default function AboutDialog({ onClose }: AboutDialogProps) {
               <strong>On a phone or tablet,</strong> Save to file downloads a copy (look in your Downloads folder or the
               Files app), and each save makes a new file. Your browser may clear what it keeps for a site you have not
               visited for a while, so save to a file to be safe. Chrome and Safari on the same phone keep separate
-              copies.
+              copies. Adding AdhocDraw to your Home Screen (in Safari: Share, then Add to Home Screen) gives it an app
+              icon, and it still needs a connection to open.
             </li>
           </ul>
           <p>
@@ -96,7 +97,7 @@ export default function AboutDialog({ onClose }: AboutDialogProps) {
               Open-source libraries &amp; licenses
             </a>
           </p>
-          <p className="about-updated">Privacy notice last updated: 8 October 2026.</p>
+          <p className="about-updated">Privacy notice last updated: 9 October 2026.</p>
           <p>
             The canvas is built with <a href="https://reactflow.dev" target="_blank" rel="noreferrer">React Flow</a>{" "}
             (MIT license), among other open-source libraries.

@@ -157,7 +157,9 @@ test.describe("Diagram templates", () => {
     await expect(page.locator(".react-flow__node")).toHaveCount(0);
     await expect(page.locator(".pencil-btn")).toHaveClass(/active/);
     await expect(page.getByRole("group", { name: "Pencil options" })).toBeVisible();
-    await expect(page.locator(".notebook-rules")).toHaveCount(1);
+    // A Notebook is a page (its own sheet with the ruled lines), not the White Board's full-width rules.
+    await expect(page.getByTestId("notebook-page")).toHaveCount(1);
+    await expect(page.locator(".notebook-rules")).toHaveCount(0);
     await expect(page.locator(".react-flow__background")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Notebook lines" })).toHaveAttribute("aria-pressed", "true");
 
@@ -181,7 +183,9 @@ test.describe("Diagram templates", () => {
     await page.reload();
     await page.locator(".diagram-tab", { hasText: name }).click();
     await expect(page.locator(".pencil-btn")).toHaveClass(/active/);
-    await expect(page.locator(".notebook-rules")).toHaveCount(1);
+    // A Notebook is a page (its own sheet with the ruled lines), not the White Board's full-width rules.
+    await expect(page.getByTestId("notebook-page")).toHaveCount(1);
+    await expect(page.locator(".notebook-rules")).toHaveCount(0);
     await deleteDiagram(page, name);
   });
 

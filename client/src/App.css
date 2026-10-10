@@ -716,6 +716,7 @@ html, body, #root {
 
 .app.dark .shape-btn,
 .app.dark .pencil-btn,
+.app.dark .eraser-btn,
 .app.dark .select-mode-btn {
   background: #2a2a36;
   border-color: #444;
@@ -724,6 +725,7 @@ html, body, #root {
 
 .app.dark .shape-btn:hover,
 .app.dark .pencil-btn:hover,
+.app.dark .eraser-btn:hover,
 .app.dark .select-mode-btn:hover {
   background: #33334a;
 }
@@ -802,6 +804,7 @@ html, body, #root {
 
 /* Pencil tool */
 .pencil-btn,
+.eraser-btn,
 .select-mode-btn {
   display: flex;
   align-items: center;
@@ -817,17 +820,20 @@ html, body, #root {
 }
 
 .toolbar-group > .pencil-btn,
+.toolbar-group > .eraser-btn,
 .toolbar-group > .select-mode-btn {
   margin-bottom: 0;
   gap: 4px;
 }
 
 .pencil-btn:hover,
+.eraser-btn:hover,
 .select-mode-btn:hover {
   background: #eaeaf2;
 }
 
 .pencil-btn.active,
+.eraser-btn.active,
 .select-mode-btn.active {
   background: #5b6ee1;
   border-color: #5b6ee1;
@@ -866,13 +872,17 @@ html, body, #root {
   color: #eee;
 }
 
-.canvas-flow-drawing {
+.canvas-flow-drawing,
+.canvas-flow-erasing {
   cursor: crosshair;
 }
 
-.canvas-flow-drawing .react-flow__pane {
+.canvas-flow-drawing .react-flow__pane,
+.canvas-flow-erasing .react-flow__pane {
   cursor: crosshair;
 }
+/* A drawing the eraser is passing over: dimmed until you let go. */
+.react-flow__node[data-erasing] { opacity: 0.25; }
 
 .canvas-flow-selecting,
 .canvas-flow-selecting .react-flow__pane {
@@ -2085,6 +2095,7 @@ html, body, #root {
 }
 
 .toolbar-group > .pencil-btn,
+.toolbar-group > .eraser-btn,
 .toolbar-group > .select-mode-btn {
   gap: 0;
 }
@@ -2624,8 +2635,11 @@ html, body, #root {
    state - hover and focus used to wash them out to the plain button color, and
    in dark mode the plain dark button style overrode the blue entirely. */
 .toolbar-group > .pencil-btn.active,
+.toolbar-group > .eraser-btn.active,
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .pencil-btn.active:focus-visible,
+.toolbar-group > .eraser-btn.active:focus-visible,
 .toolbar-group > .select-mode-btn.active,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .select-mode-btn.active:focus-visible,
@@ -2633,7 +2647,9 @@ html, body, #root {
 .toolbar-group > .shapes-toggle.active:hover,
 .toolbar-group > .shapes-toggle.active:focus-visible,
 .app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .eraser-btn.active,
 .app.dark .toolbar-group > .pencil-btn.active:hover,
+.app.dark .toolbar-group > .eraser-btn.active:hover,
 .app.dark .toolbar-group > .select-mode-btn.active,
 .app.dark .toolbar-group > .select-mode-btn.active:hover,
 .app.dark .toolbar-group > .shapes-toggle.active,
@@ -2645,6 +2661,7 @@ html, body, #root {
 
 /* A little lighter on hover, so it still reacts to the pointer. */
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .shapes-toggle.active:hover {
   background: #4a5dd0;
@@ -2779,12 +2796,15 @@ html, body, #root {
 
 /* a toggled-on tool: solid accent */
 .toolbar-group > .pencil-btn.active,
+.toolbar-group > .eraser-btn.active,
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .shapes-toggle.active,
 .toolbar-group > .shapes-toggle.active:hover,
 .app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .eraser-btn.active,
 .app.dark .toolbar-group > .select-mode-btn.active,
 .app.dark .toolbar-group > .shapes-toggle.active {
   color: #fff;
@@ -2794,12 +2814,14 @@ html, body, #root {
 }
 
 .toolbar-group > .pencil-btn.active .toolbar-icon,
+.toolbar-group > .eraser-btn.active .toolbar-icon,
 .toolbar-group > .select-mode-btn.active .toolbar-icon,
 .toolbar-group > .shapes-toggle.active .toolbar-icon {
   color: #fff;
 }
 
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .shapes-toggle.active:hover {
   background: var(--ui-accent-strong);
@@ -3126,12 +3148,15 @@ html, body, #root {
 
 /* toggled-on tools take their group's color */
 .toolbar-group > .pencil-btn.active,
+.toolbar-group > .eraser-btn.active,
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .shapes-toggle.active,
 .toolbar-group > .shapes-toggle.active:hover,
 .app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .eraser-btn.active,
 .app.dark .toolbar-group > .select-mode-btn.active,
 .app.dark .toolbar-group > .shapes-toggle.active {
   background: var(--grp);
@@ -3141,12 +3166,14 @@ html, body, #root {
 }
 
 .app.dark .toolbar-group > .pencil-btn.active,
+.app.dark .toolbar-group > .eraser-btn.active,
 .app.dark .toolbar-group > .select-mode-btn.active,
 .app.dark .toolbar-group > .shapes-toggle.active {
   color: #1a1330;
 }
 
 .toolbar-group > .pencil-btn.active:hover,
+.toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active:hover,
 .toolbar-group > .shapes-toggle.active:hover {
   background: color-mix(in srgb, var(--grp) 85%, #000);
@@ -3208,12 +3235,14 @@ html, body, #root {
 
 /* a toggled-on tool is a solid color: its icon goes white (dark: dark) */
 .toolbar-group > .pencil-btn.active .toolbar-icon,
+.toolbar-group > .eraser-btn.active .toolbar-icon,
 .toolbar-group > .select-mode-btn.active .toolbar-icon,
 .toolbar-group > .shapes-toggle.active .toolbar-icon {
   color: #fff;
 }
 
 .app.dark .toolbar-group > .pencil-btn.active .toolbar-icon,
+.app.dark .toolbar-group > .eraser-btn.active .toolbar-icon,
 .app.dark .toolbar-group > .select-mode-btn.active .toolbar-icon,
 .app.dark .toolbar-group > .shapes-toggle.active .toolbar-icon {
   color: #1a1330;
@@ -3416,12 +3445,15 @@ html, body, #root {
 
 /* the loaded brush: active tool */
 .app.theme-palette .toolbar-group > .pencil-btn.active,
+.app.theme-palette .toolbar-group > .eraser-btn.active,
 .app.theme-palette .toolbar-group > .pencil-btn.active:hover,
+.app.theme-palette .toolbar-group > .eraser-btn.active:hover,
 .app.theme-palette .toolbar-group > .select-mode-btn.active,
 .app.theme-palette .toolbar-group > .select-mode-btn.active:hover,
 .app.theme-palette .toolbar-group > .shapes-toggle.active,
 .app.theme-palette .toolbar-group > .shapes-toggle.active:hover,
 .app.theme-palette.dark .toolbar-group > .pencil-btn.active,
+.app.theme-palette.dark .toolbar-group > .eraser-btn.active,
 .app.theme-palette.dark .toolbar-group > .select-mode-btn.active,
 .app.theme-palette.dark .toolbar-group > .shapes-toggle.active {
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--grp) 78%, #fff), var(--grp) 70%);
@@ -3432,12 +3464,14 @@ html, body, #root {
 }
 
 .app.theme-palette.dark .toolbar-group > .pencil-btn.active,
+.app.theme-palette.dark .toolbar-group > .eraser-btn.active,
 .app.theme-palette.dark .toolbar-group > .select-mode-btn.active,
 .app.theme-palette.dark .toolbar-group > .shapes-toggle.active {
   color: #1a1330;
 }
 
 .app.theme-palette .toolbar-group > .pencil-btn.active .toolbar-icon,
+.app.theme-palette .toolbar-group > .eraser-btn.active .toolbar-icon,
 .app.theme-palette .toolbar-group > .select-mode-btn.active .toolbar-icon,
 .app.theme-palette .toolbar-group > .shapes-toggle.active .toolbar-icon {
   color: inherit;
@@ -4654,14 +4688,20 @@ html, body {
   user-select: text;
 }
 .canvas-flow-drawing,
-.canvas-flow-drawing * {
+.canvas-flow-drawing *,
+.canvas-flow-erasing,
+.canvas-flow-erasing * {
   touch-action: none;
 }
 /* ...but the floating panels on top of the canvas still scroll and tap normally. */
 .canvas-flow-drawing [data-draggable-panel],
-.canvas-flow-drawing [data-draggable-panel] * { touch-action: manipulation; }
+.canvas-flow-drawing [data-draggable-panel] *,
+.canvas-flow-erasing [data-draggable-panel],
+.canvas-flow-erasing [data-draggable-panel] * { touch-action: manipulation; }
 .canvas-flow-drawing .tools-panel,
-.canvas-flow-drawing .tools-panel * { touch-action: pan-x; }
+.canvas-flow-drawing .tools-panel *,
+.canvas-flow-erasing .tools-panel,
+.canvas-flow-erasing .tools-panel * { touch-action: pan-x; }
 
 /* ---- phones (600px and narrower) ---- */
 @media (max-width: 600px) {
@@ -4897,3 +4937,36 @@ html, body {
   from { opacity: 0; transform: translateX(-14px); }
   to { opacity: 1; transform: none; }
 }
+
+/* ---- Notebook page: a sheet of paper on a desk, scrolled down only ---- */
+.app .canvas-flow-notebook .react-flow { background-color: #dfe2ec; }
+.app.dark .canvas-flow-notebook .react-flow { background-color: #101018; }
+.notebook-page {
+  position: absolute;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #ffffff;
+  --rule: rgba(79, 95, 224, 0.28);
+  --margin: rgba(214, 69, 69, 0.55);
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), var(--rule) calc(100% - 1px));
+  background-repeat: repeat;
+  box-shadow: 0 0 0 1px rgba(30, 40, 90, 0.1), 0 8px 28px rgba(30, 40, 90, 0.18);
+}
+.app.dark .notebook-page {
+  background-color: #1d1d29;
+  --rule: rgba(140, 150, 255, 0.22);
+  --margin: rgba(255, 110, 110, 0.5);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+.notebook-margin-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1.5px solid var(--margin);
+}
+.app.theme-palette .canvas-flow-notebook .react-flow { background-color: #d9c7a4; }
+.app.theme-palette.dark .canvas-flow-notebook .react-flow { background-color: #1a1612; }
+.app.theme-palette .notebook-page { background-color: #fffaf0; --rule: rgba(176, 124, 52, 0.32); }
+.app.theme-palette.dark .notebook-page { background-color: #2a241c; --rule: rgba(214, 170, 96, 0.26); }

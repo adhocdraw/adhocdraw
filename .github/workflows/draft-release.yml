@@ -1,0 +1,54 @@
+name: Draft release
+
+# Push a version tag (for example v1.1.0, on a commit that is already on main) and this
+# builds the app (which runs the privacy check) and creates a DRAFT GitHub release with
+# generated notes. It never publishes: you read the draft and publish it yourself,
+# because published releases are immutable. Deploying the site is a separate workflow
+# (deploy-pages.yml) and happens on every push to main, with or without a release.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Tag must look like vMAJOR.MINOR.PATCH
+        run: |
+          if ! [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' is not vMAJOR.MINOR.PATCH (for example v1.1.0)."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Tagged commit must be on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME is not on main. Tag a commit that has been pushed to main."
+            exit 1
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Install
+        working-directory: client
+        run: npm ci
+      - name: Build (includes the privacy check)
+        working-directory: client
+        run: npm run build
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes

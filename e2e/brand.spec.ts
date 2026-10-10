@@ -48,7 +48,7 @@ test.describe("Brand and diagram name", () => {
     expect(await pill.evaluate((el) => getComputedStyle(el, "::before").content)).toBe(`"${name}"`);
   });
 
-  test("the favicon is the app's own self-contained pencil SVG", async ({ page }) => {
+  test("the favicon is the app's own self-contained \"A!\" SVG (letter A with a brush-and-pencil exclamation mark)", async ({ page }) => {
     await page.goto("/");
     const href = await page.locator('link[rel="icon"]').getAttribute("href");
     expect(href).toMatch(/^\.?\/favicon\.svg$/);
@@ -56,10 +56,11 @@ test.describe("Brand and diagram name", () => {
     expect(res.ok()).toBe(true);
     const svg = await res.text();
     expect(svg).toContain("<svg");
+    expect(svg).toContain('aria-label="AdhocDraw"');
     expect(svg).not.toMatch(/href=|url\(http|<script|<image/);
-    // Off-black by default, off-white when the system is in dark mode; no teal left.
-    expect(svg).toContain("#1a1a1a");
-    expect(svg).toMatch(/prefers-color-scheme:dark[^}]*\{[^}]*#f5f5f5/);
+    // A dark rounded tile with a white letter, a coral brush tip and dot; no teal.
+    expect(svg).toContain('rx="112"');
+    expect(svg).toContain("#ff4d6a");
     expect(svg).not.toContain("#0d9488");
   });
 

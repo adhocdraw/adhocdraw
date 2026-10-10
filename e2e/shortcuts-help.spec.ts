@@ -10,7 +10,7 @@ test.describe("Keyboard shortcuts help panel", () => {
     await page.getByRole("button", { name: "Shortcuts" }).click();
     await expect(page.locator(".shortcuts-panel")).toBeVisible();
     await expect(page.getByText("Keyboard shortcuts")).toBeVisible();
-    await expect(page.locator(".shortcuts-list li")).toHaveCount(25);
+    await expect(page.locator(".shortcuts-list li")).toHaveCount(26);
 
     await page.locator(".shortcuts-close").click();
     await expect(page.locator(".shortcuts-panel")).toHaveCount(0);

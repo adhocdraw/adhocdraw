@@ -358,4 +358,66 @@ test.describe("Touch screens", () => {
       await expect(page.locator(".flyout-panel")).toHaveCount(0);
     });
   }
+
+  test("on a phone a Notebook opens with the whole page width on screen and scrolls only down", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^New/ }).tap();
+    await page.locator(".flyout-item", { hasText: /^Notebook$/ }).tap();
+    const paper = page.getByTestId("notebook-page");
+    await expect(paper).toHaveCount(1);
+    const flow = (await page.locator(".canvas-flow").boundingBox())!;
+    const box = (await paper.boundingBox())!;
+    // The paper is as wide as the screen: nothing to scroll sideways.
+    expect(Math.abs(box.width - flow.width)).toBeLessThan(3);
+    expect(Math.abs(box.x - flow.x)).toBeLessThan(3);
+
+    // Hand tool: a swipe moves the page, and only up and down.
+    await page.getByRole("button", { name: "Pan" }).tap();
+    const vp = () =>
+      page.locator(".react-flow__viewport").evaluate((el) => {
+        const m = new DOMMatrix(getComputedStyle(el).transform);
+        return { x: m.m41, y: m.m42 };
+      });
+    const start = await vp();
+    await touchDrag(page, 200, 500, -120, 0);
+    await page.waitForTimeout(250);
+    expect((await vp()).x).toBeCloseTo(start.x, 0);
+    await touchDrag(page, 200, 600, 0, -250);
+    await expect.poll(async () => (await vp()).y).toBeLessThan(start.y - 100);
+  });
+
+  test("once a pen is used, the pen draws and a finger scrolls instead (palm rejection)", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^New/ }).tap();
+    await page.locator(".flyout-item", { hasText: /^White Board$/ }).tap();
+    const strokes = page.locator(".react-flow__node-freehand");
+    const box = (await page.locator(".canvas-flow").boundingBox())!;
+    const cdp = await page.context().newCDPSession(page);
+    const viewportX = () =>
+      page.locator(".react-flow__viewport").evaluate((el) => (el as HTMLElement).style.transform);
+
+    // Before any pen: a finger draws.
+    await touchDrag(page, box.x + 80, box.y + 320, 120, 40);
+    await expect(strokes).toHaveCount(1);
+
+    // The first pen event switches the page into pen mode, with a note about it.
+    await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: box.x + 200, y: box.y + 450, pointerType: "pen" });
+    await expect(page.locator(".app-toast").filter({ hasText: "Pencil detected" })).toBeVisible();
+
+    // Now a finger drag scrolls the board and draws nothing...
+    const before = await viewportX();
+    await touchDrag(page, box.x + 80, box.y + 500, 100, 60);
+    await expect.poll(viewportX).not.toBe(before);
+    await expect(strokes).toHaveCount(1);
+
+    // ...and the pen draws.
+    const px = box.x + 100;
+    const py = box.y + 400;
+    await cdp.send("Input.dispatchMouseEvent", { type: "mousePressed", x: px, y: py, button: "left", buttons: 1, clickCount: 1, pointerType: "pen" });
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: px + i * 12, y: py + i * 6, button: "left", buttons: 1, pointerType: "pen" });
+    }
+    await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: px + 96, y: py + 48, button: "left", buttons: 0, clickCount: 1, pointerType: "pen" });
+    await expect(strokes).toHaveCount(2);
+  });
 });

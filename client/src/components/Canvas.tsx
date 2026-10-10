@@ -16,6 +16,7 @@ import {
   reconnectEdge,
   applyNodeChanges,
   getNodesBounds,
+  PanOnScrollMode,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -37,6 +38,7 @@ import { DEFAULT_ACTOR_SIZE, DEFAULT_SHAPE_SIZE } from "../nodes/shapeDefaults";
 import ZoomControls from "./ZoomControls";
 import { createPortal } from "react-dom";
 import NotebookRules from "./NotebookRules";
+import NotebookPage, { DEFAULT_PAGE_BOUNDS, notebookFitViewport, pageBoundsFor } from "./NotebookPage";
 import ToolsPanel from "./ToolsPanel";
 import Logo from "./Logo";
 import { openRepo, SITE_URL } from "../links";
@@ -78,6 +80,9 @@ interface CanvasProps {
   pencilActive: boolean;
   onExitPencilMode: () => void;
   onTogglePencil: () => void;
+  eraserActive: boolean;
+  onExitEraser: () => void;
+  onToggleEraser: () => void;
   handModeActive: boolean;
   onExitHandMode: () => void;
   onToggleHandMode: () => void;
@@ -330,6 +335,9 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     pencilActive,
     onExitPencilMode,
     onTogglePencil,
+    eraserActive,
+    onExitEraser,
+    onToggleEraser,
     handModeActive,
     onExitHandMode,
     onToggleHandMode,
@@ -536,6 +544,12 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       autosaveCountRef.current = 0;
       if (loadedPages[0].viewport) {
         setViewport(loadedPages[0].viewport);
+      } else if (kindRef.current === "notebook") {
+        // A notebook opens with the whole page width on screen, at the top.
+        const w = document.querySelector(".canvas-flow")?.clientWidth ?? window.innerWidth;
+        const v = notebookFitViewport(w, pageBoundsFor(loadedPages[0].nodes));
+        setViewport(v);
+        lastFitZoomRef.current = v.zoom;
       } else if (loadedPages[0].nodes.length > 0) {
         // Never opened before (e.g. created from a template): frame what is
         // there. Done here, once, rather than via React Flow's fitView prop -
@@ -700,6 +714,43 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   const isBoardRef = useRef(false);
   isBoardRef.current = isBoard;
 
+  // Notebook = a page: fixed width, scrolled down only (see NotebookPage.tsx).
+  const isNotebook = kindRef.current === "notebook";
+  const isNotebookRef = useRef(false);
+  isNotebookRef.current = isNotebook;
+  const [pageBounds, setPageBounds] = useState(DEFAULT_PAGE_BOUNDS);
+  const pageBoundsRef = useRef(pageBounds);
+  pageBoundsRef.current = pageBounds;
+  const [canvasW, setCanvasW] = useState(0);
+  const lastFitZoomRef = useRef(0);
+  useEffect(() => {
+    const el = document.querySelector(".canvas-flow");
+    if (!el) return;
+    const ro = new ResizeObserver(() => setCanvasW(el.clientWidth));
+    ro.observe(el);
+    setCanvasW(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+  // The page widens only for content that is already outside it when a page is
+  // opened, never while you work (so it does not shift under you).
+  useEffect(() => {
+    if (!isNotebook || !panelsReady) return;
+    setPageBounds(pageBoundsFor(getNodes()));
+  }, [isNotebook, panelsReady, activePageId, diagramId, getNodes]);
+  // The page always fits the screen's width at least as small as its own width.
+  const notebookMinZoom = Math.max(MIN_ZOOM, Math.min(canvasW > 0 ? canvasW / (pageBounds.x1 - pageBounds.x0) : 1, 0.6));
+  // A turned phone, a resized window: keep the page fitted if it was fitted.
+  useEffect(() => {
+    if (!isNotebook || !loadedRef.current || canvasW === 0) return;
+    const vp = getViewport();
+    if (lastFitZoomRef.current > 0 && Math.abs(vp.zoom - lastFitZoomRef.current) < 0.02) {
+      const v = notebookFitViewport(canvasW, pageBoundsRef.current);
+      setViewport({ x: v.x, y: vp.y, zoom: v.zoom });
+      lastFitZoomRef.current = v.zoom;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasW]);
+
   const switchToPage = useCallback(
     (targetId: string) => {
       if (targetId === activePageId) return;
@@ -720,6 +771,11 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       setDataEditingId(null);
       if (target.viewport) {
         setViewport(target.viewport);
+      } else if (isNotebookRef.current) {
+        const w = document.querySelector(".canvas-flow")?.clientWidth ?? window.innerWidth;
+        const v = notebookFitViewport(w, pageBoundsFor(target.nodes));
+        setViewport(v);
+        lastFitZoomRef.current = v.zoom;
       } else {
         fitView(FIT_VIEW_OPTIONS);
       }
@@ -1032,11 +1088,12 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         if (shortcutsOpen) setShortcutsOpen(false);
         if (findOpen) setFindOpen(false);
         if (pencilActive) onExitPencilMode();
+        if (eraserActive) onExitEraser();
         if (selectModeActive) onExitSelectMode();
         if (textToolActive) onExitTextTool();
         if (handModeActive) onExitHandMode();
         // With no tool to leave first, Esc leaves focus mode.
-        if (focusMode && !pencilActive && !selectModeActive && !textToolActive && !handModeActive) setFocusMode(false);
+        if (focusMode && !pencilActive && !eraserActive && !selectModeActive && !textToolActive && !handModeActive) setFocusMode(false);
         setContextMenu(null);
         return;
       }
@@ -1048,6 +1105,11 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "h") {
         e.preventDefault();
         onToggleHandMode();
+        return;
+      }
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        onToggleEraser();
         return;
       }
       if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "t") {
@@ -1153,6 +1215,9 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     switchToPage,
     pencilActive,
     onExitPencilMode,
+    eraserActive,
+    onExitEraser,
+    onToggleEraser,
     selectModeActive,
     onExitSelectMode,
     textToolActive,
@@ -2067,21 +2132,89 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
     };
   }, [isDrawing, getViewport, setViewport, screenToFlowPosition]);
 
+  // Apple Pencil / stylus: once a pen has been seen, the pen draws (or erases) and a
+  // finger scrolls the page instead (palm rejection) - without one, a finger draws.
+  const [penMode, setPenMode] = useState(false);
+  const penModeRef = useRef(false);
+  penModeRef.current = penMode;
+  const drawingToolRef = useRef(false);
+  drawingToolRef.current = pencilActive || eraserActive;
+  useEffect(() => {
+    const onPointer = (e: PointerEvent) => {
+      if (e.pointerType !== "pen" || penModeRef.current) return;
+      penModeRef.current = true;
+      setPenMode(true);
+      if (drawingToolRef.current) showToast("Pencil detected: draw with the pencil, scroll with your finger.");
+    };
+    window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("pointermove", onPointer, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("pointermove", onPointer, true);
+    };
+  }, [showToast]);
+  // The pointer that is drawing / erasing right now; any other one (a resting palm) is ignored.
+  const toolPointerRef = useRef<number | null>(null);
+
+  // While the eraser drags over a drawing it is dimmed; letting go removes every dimmed one.
+  const erasingRef = useRef<Set<string> | null>(null);
+  const eraseAt = (clientX: number, clientY: number) => {
+    const ids = erasingRef.current;
+    if (!ids) return;
+    // The centre plus four points around it, so a finger (or a thin stroke) is easy to hit.
+    const R = 8;
+    for (const [dx, dy] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) {
+      for (const el of document.elementsFromPoint(clientX + dx, clientY + dy)) {
+        // Only where the stroke itself is painted (its box is mostly empty), and only drawings.
+        if (!(el instanceof SVGPathElement)) continue;
+        const nodeEl = el.closest<HTMLElement>(".react-flow__node-freehand");
+        const id = nodeEl?.dataset.id;
+        if (nodeEl && id && !ids.has(id)) {
+          ids.add(id);
+          nodeEl.setAttribute("data-erasing", "true");
+        }
+      }
+    }
+  };
+  const finishErase = () => {
+    const ids = erasingRef.current;
+    erasingRef.current = null;
+    toolPointerRef.current = null;
+    document.querySelectorAll("[data-erasing]").forEach((n) => n.removeAttribute("data-erasing"));
+    if (!ids || ids.size === 0) return;
+    setNodes((nds) => nds.filter((n) => !ids.has(n.id)));
+    setEdges((eds) => eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)));
+  };
+
   // Pointer events (not mouse events) so a finger or pen draws too: a touch drag
-  // fires no mouse events. While the pencil is on, the canvas must not pan or
-  // scroll under the finger, so the pane's own one-finger pan is stopped.
+  // fires no mouse events. While the pencil or eraser is on, the pane's own
+  // one-finger / left-button pan is stopped, so the stroke is not also a scroll.
+  // With a pen in use the finger is left alone to scroll the page.
   const handleCanvasTouchStartCapture = useCallback(
     (e: React.TouchEvent) => {
-      if (!pencilActive || spaceHeldRef.current || e.touches.length !== 1) return;
+      if (!(pencilActive || eraserActive) || penMode || spaceHeldRef.current || e.touches.length !== 1) return;
       if (e.target instanceof Element && e.target.closest(NOT_DRAWABLE_SELECTOR)) return;
       e.stopPropagation();
     },
-    [pencilActive]
+    [pencilActive, eraserActive, penMode]
+  );
+  // A pen or mouse drawing must not also pan the page (the pane would otherwise pan
+  // with it once the finger is allowed to).
+  const handleCanvasMouseDownCapture = useCallback(
+    (e: React.MouseEvent) => {
+      if (!(pencilActive || eraserActive) || e.button !== 0 || spaceHeldRef.current) return;
+      if (e.target instanceof Element && e.target.closest(NOT_DRAWABLE_SELECTOR)) return;
+      e.stopPropagation();
+    },
+    [pencilActive, eraserActive]
   );
 
   const handleCanvasMouseDown = useCallback(
     (e: React.PointerEvent) => {
-      if (!pencilActive || e.button !== 0 || !e.isPrimary || spaceHeldRef.current) return;
+      if (!(pencilActive || eraserActive) || e.button !== 0 || !e.isPrimary || spaceHeldRef.current) return;
+      // With a pen in use, fingers only scroll; and a second pointer during a stroke is a palm.
+      if (e.pointerType === "touch" && penModeRef.current) return;
+      if (toolPointerRef.current !== null) return;
       // Floating panels, buttons and form controls sit inside the canvas area
       // too; pressing on them (e.g. the pencil palette) must not start a stroke.
       if (e.target instanceof Element && e.target.closest(NOT_DRAWABLE_SELECTOR)) return;
@@ -2090,24 +2223,43 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       } catch {
         // capture is only a convenience (keeps the stroke when the finger leaves the canvas)
       }
+      toolPointerRef.current = e.pointerId;
+      if (eraserActive) {
+        erasingRef.current = new Set();
+        eraseAt(e.clientX, e.clientY);
+        return;
+      }
       pointerRef.current = { x: e.clientX, y: e.clientY };
       setIsDrawing(true);
       drawPointsRef.current = [screenToFlowPosition({ x: e.clientX, y: e.clientY })];
       setPreviewTick((t) => t + 1);
     },
-    [pencilActive, screenToFlowPosition]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pencilActive, eraserActive, screenToFlowPosition]
   );
 
   const handleCanvasMouseMove = useCallback(
     (e: React.PointerEvent) => {
+      if (toolPointerRef.current !== e.pointerId) return;
+      if (eraserActive) {
+        eraseAt(e.clientX, e.clientY);
+        return;
+      }
       if (!pencilActive || !isDrawing) return;
       drawPointsRef.current.push(screenToFlowPosition({ x: e.clientX, y: e.clientY }));
       setPreviewTick((t) => t + 1);
     },
-    [pencilActive, isDrawing, screenToFlowPosition]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pencilActive, eraserActive, isDrawing, screenToFlowPosition]
   );
 
-  const handleCanvasMouseUp = useCallback(() => {
+  const handleCanvasMouseUp = useCallback((e?: React.PointerEvent) => {
+    if (e && toolPointerRef.current !== null && e.pointerId !== toolPointerRef.current) return;
+    if (eraserActive || erasingRef.current) {
+      finishErase();
+      return;
+    }
+    toolPointerRef.current = null;
     if (!pencilActive || !isDrawing) return;
     setIsDrawing(false);
     const points = drawPointsRef.current;
@@ -2136,7 +2288,8 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       style: { width: stroke.width, height: stroke.height },
     };
     setNodes((nds) => nds.concat(node));
-  }, [pencilActive, isDrawing, setNodes, pencilOptions, penColor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pencilActive, eraserActive, isDrawing, setNodes, setEdges, pencilOptions, penColor]);
   finishStrokeRef.current = handleCanvasMouseUp;
 
   // Raw (unsmoothed) preview of the in-progress stroke, in screen space -
@@ -2366,6 +2519,16 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
             <span className="btn-label">Pencil</span>
           </button>
           <button
+            className={`eraser-btn ${eraserActive ? "active" : ""}`}
+            aria-label="Eraser"
+            aria-pressed={eraserActive}
+            title="Eraser: drag over drawings to remove them (E, Esc to exit)"
+            onClick={onToggleEraser}
+          >
+            <Icon name="eraser" />
+            <span className="btn-label">Eraser</span>
+          </button>
+          <button
             className={`text-tool-btn ${textToolActive ? "active" : ""}`}
             aria-pressed={textToolActive}
             aria-label="Text tool"
@@ -2433,7 +2596,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
       </div>
       {diagramTabs}
       <div
-        className={`canvas-flow ${pencilActive ? "canvas-flow-drawing" : ""} ${selectModeActive ? "canvas-flow-selecting" : ""} ${textToolActive ? "canvas-flow-texting" : ""} ${handModeActive ? "canvas-flow-hand" : ""} ${pencilActive && spaceHeld ? "canvas-flow-panning" : ""}`}
+        className={`canvas-flow ${pencilActive ? "canvas-flow-drawing" : ""} ${eraserActive ? "canvas-flow-erasing" : ""} ${isNotebook ? "canvas-flow-notebook" : ""} ${selectModeActive ? "canvas-flow-selecting" : ""} ${textToolActive ? "canvas-flow-texting" : ""} ${handModeActive ? "canvas-flow-hand" : ""} ${pencilActive && spaceHeld ? "canvas-flow-panning" : ""}`}
         onDrop={handleCanvasDrop}
         onDragOver={handleCanvasDragOver}
         onPointerDown={handleCanvasMouseDown}
@@ -2441,6 +2604,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
         onPointerUp={handleCanvasMouseUp}
         onPointerCancel={handleCanvasMouseUp}
         onTouchStartCapture={handleCanvasTouchStartCapture}
+        onMouseDownCapture={handleCanvasMouseDownCapture}
         onDoubleClick={handleCanvasDoubleClick}
       >
         <svg width="0" height="0" style={{ position: "absolute" }} data-marker-defs>
@@ -2497,20 +2661,23 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
           connectionLineStyle={CONNECTION_LINE_STYLE}
           deleteKeyCode={["Backspace", "Delete"]}
           disableKeyboardA11y
-          panOnDrag={selectModeActive ? false : pencilActive ? [1] : true}
-          panOnScroll={pencilActive}
+          panOnDrag={selectModeActive ? false : pencilActive || eraserActive ? (penMode ? true : [1]) : true}
+          panOnScroll={pencilActive || eraserActive || isNotebook}
+          panOnScrollMode={isNotebook ? PanOnScrollMode.Vertical : PanOnScrollMode.Free}
           panOnScrollSpeed={1}
-          zoomOnScroll={!pencilActive}
+          zoomOnScroll={!(pencilActive || eraserActive || isNotebook)}
+          translateExtent={isNotebook ? [[pageBounds.x0, pageBounds.y0], [pageBounds.x1, Infinity]] : undefined}
+          nodeExtent={isNotebook ? [[pageBounds.x0, pageBounds.y0], [pageBounds.x1, Infinity]] : undefined}
           selectionOnDrag={selectModeActive}
-          nodesDraggable={!pencilActive && !presenting && !handModeActive}
+          nodesDraggable={!pencilActive && !eraserActive && !presenting && !handModeActive}
           nodesConnectable={!handModeActive}
           elementsSelectable={!presenting && !handModeActive}
           fitViewOptions={FIT_VIEW_OPTIONS}
           proOptions={{ hideAttribution: true }}
-          minZoom={MIN_ZOOM}
+          minZoom={isNotebook ? notebookMinZoom : MIN_ZOOM}
           maxZoom={MAX_ZOOM}
         >
-          {background === "lines" && <NotebookRules />}
+          {isNotebook ? <NotebookPage bounds={pageBounds} lines={background === "lines"} /> : background === "lines" && <NotebookRules />}
           {background === "dots" && (
             <Background variant={BackgroundVariant.Dots} gap={GRID_SIZE} color={darkMode ? "#444455" : undefined} />
           )}
@@ -2861,6 +3028,14 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
                 tip: "Pencil: draw freehand (Esc to exit)",
                 active: pencilActive,
                 onClick: onTogglePencil,
+              },
+              {
+                key: "eraser",
+                icon: "eraser",
+                label: "Eraser",
+                tip: "Eraser: drag over drawings to remove them (E)",
+                active: eraserActive,
+                onClick: onToggleEraser,
               },
               {
                 key: "text",
