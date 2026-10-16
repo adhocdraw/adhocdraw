@@ -88,4 +88,38 @@ test.describe("Focus mode (full-screen editing of White Boards and Notebooks)", 
     await page.getByRole("button", { name: "Exit presentation" }).click();
     await expect(page.locator(".canvas-area")).toHaveClass(/focus/);
   });
+  test("focus mode takes the browser full screen and leaving either one leaves both", async ({ page }) => {
+    await page.goto("/");
+    await createDiagramFromMenu(page, "Board FS", "White Board");
+    const isFullscreen = () => page.evaluate(() => !!document.fullscreenElement);
+    const area = page.locator(".canvas-area");
+
+    await focusButton(page).click();
+    await expect(area).toHaveClass(/focus/);
+    await expect.poll(isFullscreen).toBe(true);
+
+    // Exiting focus mode (the Exit button) leaves full screen too.
+    await page.getByRole("button", { name: "Exit focus mode" }).click();
+    await expect(area).not.toHaveClass(/focus/);
+    await expect.poll(isFullscreen).toBe(false);
+
+    // The browser leaving full screen on its own (its Esc) leaves focus mode.
+    await focusButton(page).click();
+    await expect.poll(isFullscreen).toBe(true);
+    await page.evaluate(() => document.exitFullscreen());
+    await expect(area).not.toHaveClass(/focus/);
+  });
+  test("presenting from focus mode keeps the browser full screen when the presentation ends", async ({ page }) => {
+    await page.goto("/");
+    await createDiagramFromMenu(page, "Board FS2", "White Board");
+    const isFullscreen = () => page.evaluate(() => !!document.fullscreenElement);
+    await focusButton(page).click();
+    await expect.poll(isFullscreen).toBe(true);
+    await page.getByRole("button", { name: "Present full screen" }).click();
+    await expect(page.locator(".canvas-area")).toHaveClass(/presenting/);
+    await page.getByRole("button", { name: "Exit presentation" }).click();
+    await expect(page.locator(".canvas-area")).not.toHaveClass(/presenting/);
+    await expect(page.locator(".canvas-area")).toHaveClass(/focus/);
+    await expect.poll(isFullscreen).toBe(true);
+  });
 });

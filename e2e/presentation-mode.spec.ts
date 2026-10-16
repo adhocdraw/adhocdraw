@@ -74,4 +74,22 @@ test.describe("Presentation mode", () => {
     await expect(top).toHaveCount(0);
     await expect(page.locator(".canvas-header")).toBeVisible();
   });
+  test("Present takes the browser full screen; Esc and a browser exit both leave it", async ({ diagramPage: page }) => {
+    await addWidget(page, "Process");
+    const isFullscreen = () => page.evaluate(() => !!document.fullscreenElement);
+    const present = page.getByRole("button", { name: "Present", exact: true });
+
+    await present.click();
+    await expect(page.locator(".presentation-controls")).toBeVisible();
+    await expect.poll(isFullscreen).toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".presentation-controls")).toBeHidden();
+    await expect.poll(isFullscreen).toBe(false);
+
+    // The browser leaving full screen on its own (its Esc) ends the presentation.
+    await present.click();
+    await expect.poll(isFullscreen).toBe(true);
+    await page.evaluate(() => document.exitFullscreen());
+    await expect(page.locator(".presentation-controls")).toBeHidden();
+  });
 });

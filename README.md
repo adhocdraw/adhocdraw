@@ -81,7 +81,9 @@ Each test starts with an empty browser, so tests never share data.
   resize or delete (Backspace/Delete).
 - On a White Board or Notebook, a floating **tool panel** has Undo and Redo, then
   Shapes, Hand (pan), Select, Pencil, Eraser, Text, Snap to grid, and Focus (full-screen
-  editing, `F`) and Present. In focus mode the diagram name shows at the bottom left.
+  editing, `F`) and Present. Focus and Present also put the browser
+  itself full screen (where the browser allows it); Esc leaves both. In focus mode the diagram name
+  shows at the bottom left.
 - **Pencil** draws freehand (colour, thickness, opacity and line style in its
   panel; hold Space or push to the canvas edge to scroll). **Eraser** (`E`; also in the
   Draw group) removes a drawing when you drag over it (shapes are left alone; undo

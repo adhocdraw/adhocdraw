@@ -418,6 +418,43 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   // Focus mode: edit a White Board / Notebook full screen (a fixed overlay like
   // presentation mode, but with the tools, palette, zoom and page panels kept).
   const [focusMode, setFocusMode] = useState(false);
+  // Focus mode and presenting also take the browser full screen, where the browser
+  // allows it (not iPhone Safari). Leaving both leaves full screen, and leaving full
+  // screen from the browser (its own Esc) leaves both. No data is involved.
+  const wantFullscreen = focusMode || presenting;
+  const fullscreenOwnedRef = useRef(false);
+  useEffect(() => {
+    if (!wantFullscreen) return;
+    let cancelled = false;
+    const root = document.documentElement;
+    if (!document.fullscreenElement && typeof root.requestFullscreen === "function") {
+      root.requestFullscreen().then(
+        () => {
+          if (cancelled) document.exitFullscreen?.().catch(() => {});
+          else fullscreenOwnedRef.current = true;
+        },
+        () => {},
+      );
+    }
+    return () => {
+      cancelled = true;
+      if (fullscreenOwnedRef.current) {
+        fullscreenOwnedRef.current = false;
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, [wantFullscreen]);
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement && fullscreenOwnedRef.current) {
+        fullscreenOwnedRef.current = false;
+        setFocusMode(false);
+        setPresenting(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
   const [pages, setPages] = useState<{ id: string; name: string }[]>([]);
   const [activePageId, setActivePageId] = useState<string>("");
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
