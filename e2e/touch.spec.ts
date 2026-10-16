@@ -420,4 +420,32 @@ test.describe("Touch screens", () => {
     await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: px + 96, y: py + 48, button: "left", buttons: 0, clickCount: 1, pointerType: "pen" });
     await expect(strokes).toHaveCount(2);
   });
+
+  test("a two-finger scroll draws no pencil marks", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^New/ }).tap();
+    await page.locator(".flyout-item", { hasText: /^White Board$/ }).tap();
+    const strokes = page.locator(".react-flow__node-freehand");
+    const box = (await page.locator(".canvas-flow").boundingBox())!;
+    const cdp = await page.context().newCDPSession(page);
+    const send = (type: string, pts: { id: number; x: number; y: number }[]) =>
+      cdp.send("Input.dispatchTouchEvent", { type, touchPoints: pts });
+    const x = box.x + 100;
+    const y = box.y + 400;
+    // The first finger lands a moment before the second, as in a real two-finger swipe.
+    await send("touchStart", [{ id: 1, x, y }]);
+    await send("touchMove", [{ id: 1, x, y: y - 6 }]);
+    await send("touchStart", [{ id: 1, x, y: y - 6 }, { id: 2, x: x + 60, y }]);
+    for (let i = 1; i <= 10; i++) {
+      await send("touchMove", [{ id: 1, x, y: y - 6 - i * 12 }, { id: 2, x: x + 60, y: y - i * 12 }]);
+      await page.waitForTimeout(16);
+    }
+    await send("touchEnd", []);
+    await page.waitForTimeout(200);
+    await expect(strokes).toHaveCount(0);
+    await expect(page.locator(".canvas-flow svg path[data-preview], .canvas-flow .freehand-preview")).toHaveCount(0);
+    // A single finger still draws afterwards.
+    await touchDrag(page, box.x + 80, box.y + 320, 120, 40);
+    await expect(strokes).toHaveCount(1);
+  });
 });

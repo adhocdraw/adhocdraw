@@ -916,6 +916,25 @@ html, body, #root {
   height: 100%;
 }
 
+/* A stroke's box is mostly empty: only the stroke (plus a thin hit band, see
+   FreehandNode.tsx) takes clicks, so whatever is behind the empty part of the
+   box stays clickable. Resize handles still work. */
+.react-flow__node-freehand {
+  pointer-events: none !important;
+}
+.react-flow__node-freehand .react-flow__resize-control {
+  pointer-events: all;
+}
+.react-flow__node.react-flow__node-freehand.selected,
+.react-flow__node.react-flow__node-freehand.selectable:focus,
+.react-flow__node.react-flow__node-freehand.selectable:focus-visible {
+  outline: 1.5px dashed #5b6ee1;
+  outline-offset: 2px;
+}
+.react-flow__node-freehand .react-flow__resize-control.line {
+  opacity: 0;
+}
+
 /* Node lock badge */
 .node-lock-badge {
   position: absolute;

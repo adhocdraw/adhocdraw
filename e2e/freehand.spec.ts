@@ -345,4 +345,24 @@ test.describe("Freehand pencil tool", () => {
       await expect(page.locator(".react-flow__node-freehand")).toHaveCount(0);
     });
   });
+  test("only the stroke takes clicks: the empty part of its box passes through", async ({ diagramPage: page }) => {
+    await page.locator(".pencil-btn").click();
+    const canvasBox = await page.locator(".canvas-flow").boundingBox();
+    if (!canvasBox) throw new Error("canvas not found");
+    await dragFromPoint(page, canvasBox.x + 300, canvasBox.y + 200, 200, 120);
+    await page.locator(".pencil-btn").click();
+    const node = page.locator(".react-flow__node-freehand");
+    await expect(node).toHaveCount(1);
+    const box = await node.boundingBox();
+    if (!box) throw new Error("node not found");
+
+    // Top-right corner of a diagonal stroke's box is empty: no selection.
+    await page.mouse.click(box.x + box.width - 12, box.y + 12);
+    await expect(node).not.toHaveClass(/selected/);
+
+    // The stroke itself still selects, with a dashed outline.
+    await node.click();
+    await expect(node).toHaveClass(/selected/);
+    await expect(node).toHaveCSS("outline-style", "dashed");
+  });
 });

@@ -4,6 +4,11 @@
 import { Handle, Position, NodeResizer } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 
+// Screen-pixel width of the invisible band around a stroke that still counts as
+// "on the stroke". The node's box is mostly empty, so only this band (and the
+// painted stroke) takes clicks; see .react-flow__node-freehand in App.css.
+const HIT_WIDTH = 14;
+
 export default function FreehandNode({ data, selected }: NodeProps) {
   const pathD = (data as { pathD?: string }).pathD ?? "";
   const viewBox = (data as { viewBox?: string }).viewBox ?? "0 0 100 100";
@@ -30,9 +35,20 @@ export default function FreehandNode({ data, selected }: NodeProps) {
       {locked && <span className="node-lock-badge">🔒</span>}
       <svg className="freehand-node-svg" viewBox={viewBox} preserveAspectRatio="none">
         {smoothed ? (
-          <path d={pathD} fill={paint} fillOpacity={opacity} stroke="none" />
+          <path
+            d={pathD}
+            fill={paint}
+            fillOpacity={opacity}
+            stroke="transparent"
+            strokeWidth={HIT_WIDTH}
+            vectorEffect="non-scaling-stroke"
+            pointerEvents="all"
+          />
         ) : (
-          <path d={pathD} fill="none" stroke={paint} strokeOpacity={opacity} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <>
+            <path d={pathD} fill="none" stroke={paint} strokeOpacity={opacity} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+            <path d={pathD} fill="none" stroke="transparent" strokeWidth={HIT_WIDTH} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" pointerEvents="stroke" />
+          </>
         )}
       </svg>
       <Handle type="source" position={Position.Top} id="top" isConnectableStart isConnectableEnd />

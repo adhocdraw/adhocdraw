@@ -2211,6 +2211,19 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
 
   const handleCanvasMouseDown = useCallback(
     (e: React.PointerEvent) => {
+      // A second finger means a two-finger scroll / pinch, not a stroke: drop the
+      // stroke the first finger started and let the pane pan or zoom.
+      if (e.pointerType === "touch" && !e.isPrimary && toolPointerRef.current !== null) {
+        if (erasingRef.current) {
+          erasingRef.current = null;
+          document.querySelectorAll("[data-erasing]").forEach((n) => n.removeAttribute("data-erasing"));
+        }
+        toolPointerRef.current = null;
+        drawPointsRef.current = [];
+        setIsDrawing(false);
+        setPreviewTick((t) => t + 1);
+        return;
+      }
       if (!(pencilActive || eraserActive) || e.button !== 0 || !e.isPrimary || spaceHeldRef.current) return;
       // With a pen in use, fingers only scroll; and a second pointer during a stroke is a palm.
       if (e.pointerType === "touch" && penModeRef.current) return;
