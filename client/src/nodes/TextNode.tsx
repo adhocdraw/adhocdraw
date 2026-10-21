@@ -7,11 +7,13 @@ import type { NodeProps } from "@xyflow/react";
 import { getTextStyle } from "./textStyle";
 import { DEFAULT_FONT_SIZE } from "./shapeDefaults";
 import { NotebookLinesContext } from "../contexts/NotebookLinesContext";
+import { useConnected } from "./useConnected";
 
 const MIN_AUTO_WIDTH = 80;
 
 export default function TextNode({ id, data, selected }: NodeProps) {
   const { setNodes } = useReactFlow();
+  const connected = useConnected(id);
   // A text box made by typing straight onto the canvas opens for typing.
   const createdByTyping = useRef((data as { autoEdit?: boolean }).autoEdit === true).current;
   const [editing, setEditing] = useState(createdByTyping);
@@ -161,7 +163,7 @@ export default function TextNode({ id, data, selected }: NodeProps) {
   return (
     <div
       ref={rootRef}
-      className={`text-node${explicitColor ? "" : " text-node-auto"}`}
+      className={`text-node${explicitColor ? "" : " text-node-auto"}${connected ? " text-node-connected" : ""}`}
       onDoubleClick={(e) => {
         e.stopPropagation();
         if (!locked) {

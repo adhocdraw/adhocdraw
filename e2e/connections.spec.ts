@@ -96,4 +96,22 @@ test.describe("Node connections", () => {
     expect(edgeIds.some((id) => id?.includes(`${sourceId}top-`) && id.includes(`${topId}bottom`))).toBe(true);
     expect(edgeIds.some((id) => id?.includes(`${sourceId}bottom-`) && id.includes(`${bottomId}top`))).toBe(true);
   });
+  test("a text box shows a frame while an arrow is attached to it", async ({ diagramPage: page }) => {
+    const sticky = await addWidget(page, "Sticky Note");
+    const text = await addWidget(page, "Text");
+    await settleLayout(page);
+    await spreadNodes(page, [sticky, text]);
+    const box = text.locator(".text-node-text");
+    await expect(text.locator(".text-node-connected")).toHaveCount(0);
+    await expect(box).toHaveCSS("border-top-color", "rgba(0, 0, 0, 0)");
+
+    await dragHandle(page, sticky, "right", text, "left");
+    await expect(text.locator(".text-node-connected")).toHaveCount(1);
+    await expect(box).not.toHaveCSS("border-top-color", "rgba(0, 0, 0, 0)");
+
+    await page.locator(".react-flow__edge-path").first().click({ force: true });
+    await page.keyboard.press("Delete");
+    await expect(page.locator(".react-flow__edge")).toHaveCount(0);
+    await expect(text.locator(".text-node-connected")).toHaveCount(0);
+  });
 });

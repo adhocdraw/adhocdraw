@@ -473,7 +473,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   const pageContentRef = useRef<Record<string, { nodes: Node[]; edges: Edge[]; viewport?: { x: number; y: number; zoom: number } }>>(
     {}
   );
-  const { getNodes, deleteElements, zoomTo, getZoom, setViewport, getViewport, fitView, screenToFlowPosition } =
+  const { getNode, getNodes, deleteElements, zoomTo, getZoom, setViewport, getViewport, fitView, screenToFlowPosition } =
     useReactFlow();
   const viewport = useViewport();
   // Latest fitView for effects that must not re-run when its identity changes.
@@ -748,6 +748,14 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
   // The floating tools panel: always on boards; on a phone also on charts, where it takes
   // the place of the toolbar's Draw group.
   const showToolsPanel = isBoard || phoneView;
+  // On boards a pencil stroke is a drawing, not a connectable shape: no new arrow may start
+  // or end on one (its dots are hidden in App.css). Arrows already attached keep working.
+  const isValidConnection = useCallback(
+    (c: { source: string; target: string }) =>
+      !isBoardRef.current ||
+      (getNode(c.source)?.type !== "freehand" && getNode(c.target)?.type !== "freehand"),
+    [getNode],
+  );
   const isBoardRef = useRef(false);
   isBoardRef.current = isBoard;
 
@@ -2685,6 +2693,7 @@ const CanvasInner = forwardRef<CanvasHandle, CanvasProps>(function CanvasInner(
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          isValidConnection={isValidConnection}
           onReconnect={onReconnect}
           reconnectRadius={12}
           onNodeDrag={onNodeDrag}

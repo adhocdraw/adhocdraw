@@ -911,6 +911,19 @@ html, body, #root {
   position: relative;
 }
 
+/* A stroke that has an arrow attached: a thin frame just outside its box. */
+.freehand-connected::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1.5px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.react-flow__node.react-flow__node-freehand.selected:has(.freehand-connected) {
+  outline-offset: 6px;
+}
+
 .freehand-node-svg {
   width: 100%;
   height: 100%;
@@ -920,6 +933,12 @@ html, body, #root {
    FreehandNode.tsx) takes clicks, so whatever is behind the empty part of the
    box stays clickable. Resize handles still work. */
 .react-flow__node-freehand {
+  pointer-events: none !important;
+}
+/* White Boards and Notebooks: a stroke shows no connector dots (and takes no new
+   arrows, see isValidConnection in Canvas.tsx). Charts keep them. */
+.canvas-area.is-board .react-flow__node-freehand .react-flow__handle {
+  opacity: 0 !important;
   pointer-events: none !important;
 }
 .react-flow__node-freehand .react-flow__resize-control {
@@ -4278,6 +4297,12 @@ html, body, #root {
   word-break: normal;
 }
 .text-node-textarea { border-style: dashed; border-color: #999; }
+/* A text box with an arrow attached shows a thin frame (same look as a connected
+   pencil stroke, .freehand-connected), so the arrow ends on something. */
+.text-node-connected .text-node-text {
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 6px;
+}
 
 .text-node-sizer {
   position: absolute;

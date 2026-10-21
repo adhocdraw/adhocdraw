@@ -3,13 +3,17 @@
 
 import { Handle, Position, NodeResizer } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
+import { useConnected } from "./useConnected";
 
 // Screen-pixel width of the invisible band around a stroke that still counts as
 // "on the stroke". The node's box is mostly empty, so only this band (and the
 // painted stroke) takes clicks; see .react-flow__node-freehand in App.css.
 const HIT_WIDTH = 14;
 
-export default function FreehandNode({ data, selected }: NodeProps) {
+export default function FreehandNode({ id, data, selected }: NodeProps) {
+  // A stroke with an arrow attached gets a thin frame (see .freehand-connected in
+  // App.css), so the arrow visibly ends on something and the link is not a surprise.
+  const connected = useConnected(id);
   const pathD = (data as { pathD?: string }).pathD ?? "";
   const viewBox = (data as { viewBox?: string }).viewBox ?? "0 0 100 100";
   const strokeColor = (data as { strokeColor?: string }).strokeColor ?? "#333333";
@@ -30,7 +34,7 @@ export default function FreehandNode({ data, selected }: NodeProps) {
   const paint = auto ? "currentColor" : strokeColor;
 
   return (
-    <div className={`freehand-node-wrapper${auto ? " freehand-auto" : ""}`}>
+    <div className={`freehand-node-wrapper${auto ? " freehand-auto" : ""}${connected ? " freehand-connected" : ""}`}>
       <NodeResizer isVisible={selected && !locked} minWidth={30} minHeight={30} />
       {locked && <span className="node-lock-badge">🔒</span>}
       <svg className="freehand-node-svg" viewBox={viewBox} preserveAspectRatio="none">

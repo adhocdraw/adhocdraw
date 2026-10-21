@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect } from "./fixtures";
-import { dragFromPoint, settleLayout } from "./helpers";
+import { addWidget, createDiagramFromMenu, dragFromPoint, dragHandle, settleLayout } from "./helpers";
 
 test.describe("Freehand pencil tool", () => {
   test("drawing a stroke creates a selectable freehand node and stays in pencil mode", async ({
@@ -364,5 +364,67 @@ test.describe("Freehand pencil tool", () => {
     await node.click();
     await expect(node).toHaveClass(/selected/);
     await expect(node).toHaveCSS("outline-style", "dashed");
+  });
+  test("a stroke shows connector dots and takes arrows on charts, but not on White Boards", async ({ page }) => {
+    for (const kind of ["Blank Chart", "White Board"]) {
+      const isBoard = kind === "White Board";
+      await page.goto("/");
+      await createDiagramFromMenu(page, `Dots ${kind} ${Date.now()}`, kind);
+      const shape = await addWidget(page, "Process");
+      // Boards open with the pencil already on; charts need it switched on.
+      if (!isBoard) await page.locator(".pencil-btn").click();
+      const canvasBox = await page.locator(".canvas-flow").boundingBox();
+      if (!canvasBox) throw new Error("canvas not found");
+      await dragFromPoint(page, canvasBox.x + canvasBox.width * 0.6, canvasBox.y + canvasBox.height * 0.6, 120, 60);
+      await page.keyboard.press("Escape");
+      const stroke = page.locator(".react-flow__node-freehand");
+      await expect(stroke).toHaveCount(1);
+
+      const sbox = await stroke.boundingBox();
+      if (!sbox) throw new Error("stroke not found");
+      // Hover the stroke itself (its diagonal passes through the centre of its box).
+      await page.mouse.move(sbox.x + sbox.width / 2, sbox.y + sbox.height / 2);
+      const dot = stroke.locator('[data-handlepos="left"]');
+      await expect(dot).toHaveCSS("opacity", isBoard ? "0" : "1");
+
+      if (isBoard) {
+        // No new arrow may end on a stroke, even when dropped on where its dot would be.
+        const from = await shape.locator('[data-handlepos="right"]').boundingBox();
+        const to = await dot.boundingBox();
+        if (!from || !to) throw new Error("handle box not found");
+        await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+        await page.mouse.up();
+        await expect(page.locator(".react-flow__edge")).toHaveCount(0);
+      } else {
+        await dragHandle(page, shape, "right", stroke, "left");
+      }
+    }
+  });
+  test("a stroke gets a frame while an arrow is attached to it, and loses it when the arrow goes", async ({ diagramPage: page }) => {
+    const shape = await addWidget(page, "Process");
+    await page.locator(".pencil-btn").click();
+    const canvasBox = await page.locator(".canvas-flow").boundingBox();
+    if (!canvasBox) throw new Error("canvas not found");
+    await dragFromPoint(page, canvasBox.x + canvasBox.width * 0.6, canvasBox.y + canvasBox.height * 0.6, 120, 60);
+    await page.locator(".pencil-btn").click();
+    const stroke = page.locator(".react-flow__node-freehand");
+    await expect(stroke).toHaveCount(1);
+    const frame = stroke.locator(".freehand-node-wrapper");
+    await expect(frame).not.toHaveClass(/freehand-connected/);
+    const sbox = await stroke.boundingBox();
+    if (!sbox) throw new Error("stroke not found");
+    await page.mouse.move(sbox.x + sbox.width / 2, sbox.y + sbox.height / 2);
+
+    await dragHandle(page, shape, "right", stroke, "left");
+    await expect(frame).toHaveClass(/freehand-connected/);
+    await expect(frame).toHaveCSS("border-top-style", "none");
+    expect(await frame.evaluate((el) => getComputedStyle(el, "::after").borderTopStyle)).toBe("solid");
+
+    await page.locator(".react-flow__edge-path").first().click({ force: true });
+    await page.keyboard.press("Delete");
+    await expect(page.locator(".react-flow__edge")).toHaveCount(0);
+    await expect(frame).not.toHaveClass(/freehand-connected/);
   });
 });
