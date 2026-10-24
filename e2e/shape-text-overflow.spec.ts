@@ -16,52 +16,69 @@ async function typeMultilineText(page: import("@playwright/test").Page, node: im
 }
 
 test.describe("Shape text overflow", () => {
-  test("a Cloud shape's icon keeps its regular size and the node grows to show all the typed text", async ({
+  for (const kind of ["Cloud", "Database", "Document"]) {
+    test(`a ${kind} shape keeps its size however much text is typed, and the text stays inside it`, async ({
+      diagramPage: page,
+    }) => {
+      const pageErrors: Error[] = [];
+      page.on("pageerror", (err) => pageErrors.push(err));
+
+      const node = await addWidget(page, kind);
+      const before = await node.boundingBox();
+      await typeMultilineText(page, node);
+      await page.waitForTimeout(300); // (and, if the height effect were looping, time to crash)
+
+      const after = await node.boundingBox();
+      const labelBox = await node.locator(".shape-node-svg-label").boundingBox();
+      if (!before || !after || !labelBox) throw new Error("box not found");
+      expect(after.height).toBeCloseTo(before.height, 0);
+      expect(after.width).toBeCloseTo(before.width, 0);
+      expect(labelBox.y).toBeGreaterThanOrEqual(after.y - 1);
+      expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(after.y + after.height + 1);
+      expect(pageErrors).toEqual([]);
+    });
+  }
+
+  for (const kind of ["Server", "Actor / User"]) {
+    test(`a ${kind} shape keeps its size however much text is typed; the label hangs below it`, async ({
+      diagramPage: page,
+    }) => {
+      const pageErrors: Error[] = [];
+      page.on("pageerror", (err) => pageErrors.push(err));
+
+      const node = await addWidget(page, kind);
+      const before = await node.boundingBox();
+      await typeMultilineText(page, node);
+      await page.waitForTimeout(300);
+
+      const after = await node.boundingBox();
+      const label = node.locator(".shape-node-svg-label");
+      const labelBox = await label.boundingBox();
+      if (!before || !after || !labelBox) throw new Error("box not found");
+      expect(after.height).toBeCloseTo(before.height, 0);
+      expect(labelBox.y).toBeGreaterThanOrEqual(after.y + after.height - 1);
+      await expect(label).toHaveText(/Line1/);
+      expect(pageErrors).toEqual([]);
+    });
+  }
+
+  test("in dark mode the text of an icon shape is readable: dark ink inside the shape, white below it", async ({
     diagramPage: page,
   }) => {
-    const pageErrors: Error[] = [];
-    page.on("pageerror", (err) => pageErrors.push(err));
-
-    const node = await addWidget(page, "Cloud");
-    const beforeHeight = await node.evaluate((el) => (el as HTMLElement).getBoundingClientRect().height);
-    await typeMultilineText(page, node);
-    // Give the height-measuring effect a moment to settle (and, if it were
-    // looping, a moment to crash) before asserting anything.
-    await page.waitForTimeout(300);
-
-    const nodeBox = await node.boundingBox();
-    const iconBox = await node.locator(".shape-svg").boundingBox();
-    const labelBox = await node.locator(".shape-node-svg-label").boundingBox();
-    if (!nodeBox || !iconBox || !labelBox) throw new Error("box not found");
-
-    // The node grew to fit all 7 lines instead of squeezing the icon or
-    // clipping/scrolling the text.
-    expect(nodeBox.height).toBeGreaterThan(beforeHeight * 1.5);
-    expect(iconBox.height).toBeGreaterThan(15); // screen px: 24px min x 0.8 zoom
-    expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(nodeBox.y + nodeBox.height + 1);
-    expect(pageErrors).toEqual([]);
-  });
-
-  test("a Server shape's icon keeps its regular size and the node grows to show all the typed text", async ({
-    diagramPage: page,
-  }) => {
-    const pageErrors: Error[] = [];
-    page.on("pageerror", (err) => pageErrors.push(err));
-
-    const node = await addWidget(page, "Server");
-    const beforeHeight = await node.evaluate((el) => (el as HTMLElement).getBoundingClientRect().height);
-    await typeMultilineText(page, node);
-    await page.waitForTimeout(300);
-
-    const nodeBox = await node.boundingBox();
-    const iconBox = await node.locator(".shape-svg").boundingBox();
-    const labelBox = await node.locator(".shape-node-svg-label").boundingBox();
-    if (!nodeBox || !iconBox || !labelBox) throw new Error("box not found");
-
-    expect(nodeBox.height).toBeGreaterThan(beforeHeight * 1.5);
-    expect(iconBox.height).toBeGreaterThan(15); // screen px: 24px min x 0.8 zoom
-    expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(nodeBox.y + nodeBox.height + 1);
-    expect(pageErrors).toEqual([]);
+    await page.getByRole("button", { name: "Dark mode" }).click();
+    const colorOf = async (kind: string) => {
+      const node = await addWidget(page, kind);
+      await node.dblclick();
+      await page.locator(".shape-node-textarea").fill("Orders");
+      await page.mouse.click(20, 20);
+      const label = node.locator(".shape-node-svg-label");
+      await expect(label).toContainText("Orders");
+      return label.evaluate((el) => getComputedStyle(el).color);
+    };
+    // Inside the shape: dark ink on the light fill.
+    expect(await colorOf("Database")).toBe("rgb(29, 29, 31)");
+    // Hanging over the dark canvas: white.
+    expect(await colorOf("Server")).toBe("rgb(255, 255, 255)");
   });
 
   test("a CSS-drawn shape (Process) grows to show all the typed text instead of clipping or spilling past its border", async ({

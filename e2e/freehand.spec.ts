@@ -205,6 +205,19 @@ test.describe("Freehand pencil tool", () => {
       expect(thick.height).toBeGreaterThan(thin.height + 8);
     });
 
+    test("the line style starts on Uniform, and a chosen Pen style is remembered after a reload", async ({
+      diagramPage: page,
+      diagram,
+    }) => {
+      await page.locator(".pencil-btn").click();
+      await expect(page.getByLabel("Pencil line style")).toHaveValue("uniform");
+      await page.getByLabel("Pencil line style").selectOption("pen");
+      await page.reload();
+      await page.getByText(diagram.name, { exact: true }).click();
+      await page.locator(".pencil-btn").click();
+      await expect(page.getByLabel("Pencil line style")).toHaveValue("pen");
+    });
+
     test("the uniform line style keeps the same width however fast you draw", async ({ diagramPage: page }) => {
       await page.locator(".pencil-btn").click();
       await page.getByLabel("Pencil line style").selectOption("uniform");

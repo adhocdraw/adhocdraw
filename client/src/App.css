@@ -425,11 +425,48 @@ html, body, #root {
   min-height: 24px;
 }
 
+/* The label of an icon shape. By default it sits inside the drawn shape and is
+   clipped there, so the shape never changes size with the text (colour is set
+   in ShapeNode.tsx from the fill). */
+.shape-node-svg {
+  position: relative;
+}
 .shape-node-svg-label {
-  flex-shrink: 0;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   text-align: center;
-  padding: 0 4px 4px;
+  padding: 6% 10%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.shape-node-svg-label .shape-node-textarea {
+  color: inherit;
+}
+/* Server and Actor: the label hangs just below the box, over the canvas, so it
+   follows the theme. The box keeps its size. */
+.shape-node-svg.shape-label-below {
+  overflow: visible;
+}
+.shape-label-below .shape-node-svg-label {
+  inset: auto;
+  top: 100%;
+  left: -30%;
+  right: -30%;
+  width: auto;
+  padding: 3px 0 0;
+  overflow: visible;
+  color: #1d1d1f;
+}
+.app.dark .shape-label-below .shape-node-svg-label {
+  color: #ffffff;
+}
+.shape-label-below .shape-node-textarea {
+  width: 100%;
+  height: 3.4em;
 }
 
 .shape-node-textarea {
@@ -3213,8 +3250,27 @@ html, body, #root {
 .toolbar-group > .pencil-btn.active:hover,
 .toolbar-group > .eraser-btn.active:hover,
 .toolbar-group > .select-mode-btn.active:hover,
-.toolbar-group > .shapes-toggle.active:hover {
+.toolbar-group > .shapes-toggle.active:hover,
+.toolbar-group > .hand-mode-btn.active:hover,
+.toolbar-group > .text-tool-btn.active:hover,
+.toolbar-group > .focus-mode-btn.active:hover {
   background: color-mix(in srgb, var(--grp) 85%, #000);
+}
+
+/* Dark mode: an older rule turned these blue while hovered (right after a click),
+   so a selected Pencil looked blue and a selected Hand violet. Every selected
+   tool stays in its group colour, and darkens a little on hover. */
+.app.dark .toolbar-group > .pencil-btn.active:hover,
+.app.dark .toolbar-group > .eraser-btn.active:hover,
+.app.dark .toolbar-group > .select-mode-btn.active:hover,
+.app.dark .toolbar-group > .shapes-toggle.active:hover,
+.app.dark .toolbar-group > .hand-mode-btn.active:hover,
+.app.dark .toolbar-group > .text-tool-btn.active:hover,
+.app.dark .toolbar-group > .focus-mode-btn.active:hover {
+  background: color-mix(in srgb, var(--grp) 85%, #000);
+  border-color: color-mix(in srgb, var(--grp) 70%, #000);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--grp) 50%, transparent);
+  color: #1a1330;
 }
 
 /* unsaved-work attention uses amber, not the base color */
@@ -4257,18 +4313,19 @@ html, body, #root {
 
 /* Text tool button: same solid group colour as the other toggled tools. */
 .toolbar-group > .text-tool-btn.active,
-.toolbar-group > .text-tool-btn.active:hover,
 .toolbar-group > .hand-mode-btn.active,
-.toolbar-group > .hand-mode-btn.active:hover,
 .toolbar-group > .focus-mode-btn.active,
-.toolbar-group > .focus-mode-btn.active:hover {
+.app.dark .toolbar-group > .text-tool-btn.active,
+.app.dark .toolbar-group > .hand-mode-btn.active,
+.app.dark .toolbar-group > .focus-mode-btn.active {
   background: var(--grp);
   border-color: color-mix(in srgb, var(--grp) 70%, #000);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--grp) 50%, transparent);
   color: #fff;
 }
 .app.dark .toolbar-group > .text-tool-btn.active,
-.app.dark .toolbar-group > .hand-mode-btn.active { color: #1a1330; }
+.app.dark .toolbar-group > .hand-mode-btn.active,
+.app.dark .toolbar-group > .focus-mode-btn.active { color: #1a1330; }
 .toolbar-group > .text-tool-btn.active .toolbar-icon,
 .toolbar-group > .hand-mode-btn.active .toolbar-icon { color: inherit; }
 .app.theme-palette .toolbar-group > .text-tool-btn.active,

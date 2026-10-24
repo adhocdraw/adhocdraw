@@ -13,10 +13,10 @@ export interface PencilOptions {
   color: string;
   size: number; // stroke width in px
   opacity: number; // 0.1 - 1
-  style: "pen" | "uniform"; // pen: width varies with drawing speed
+  style: "pen" | "uniform"; // uniform (the default): even width; pen: width varies with drawing speed
 }
 
-export const DEFAULT_PENCIL_OPTIONS: PencilOptions = { color: AUTO_PEN, size: 3, opacity: 1, style: "pen" };
+export const DEFAULT_PENCIL_OPTIONS: PencilOptions = { color: AUTO_PEN, size: 3, opacity: 1, style: "uniform" };
 
 const STORAGE_KEY = "adhocdraw.pencilOptions";
 
@@ -33,7 +33,7 @@ export function loadPencilOptions(): PencilOptions {
         color: sessionPenColor,
         size: Math.min(24, Math.max(1, raw.size)),
         opacity: Math.min(1, Math.max(0.1, raw.opacity)),
-        style: raw.style === "uniform" ? "uniform" : "pen",
+        style: raw.style === "pen" ? "pen" : "uniform",
       };
     }
   } catch {
@@ -140,7 +140,7 @@ export default function PencilPanel({
         <select
           value={options.style}
           aria-label="Pencil line style"
-          onChange={(e) => onChange({ style: e.target.value === "uniform" ? "uniform" : "pen" })}
+          onChange={(e) => onChange({ style: e.target.value === "pen" ? "pen" : "uniform" })}
         >
           <option value="pen">Pen (varies with speed)</option>
           <option value="uniform">Uniform</option>

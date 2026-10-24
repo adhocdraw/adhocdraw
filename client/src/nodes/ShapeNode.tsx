@@ -84,6 +84,20 @@ const SVG_SHAPES: Partial<Record<ShapeKind, (color: string, stroke: string) => R
   ),
 };
 
+// Icon shapes with no clear inside area: their label hangs just below the box (and
+// never changes the box size). The others carry their label inside the drawn shape.
+const LABEL_BELOW = new Set<ShapeKind>(["server", "actor"]);
+
+// Black or white ink, whichever reads better on the shape's fill (the fill stays
+// light or dark whatever the theme, so the ink cannot follow the theme).
+function inkOn(fill: string): string {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(fill.trim());
+  if (!m) return "#1d1d1f";
+  const h = m[1].length === 3 ? m[1].replace(/./g, "$&$&") : m[1];
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return 0.299 * r + 0.587 * g + 0.114 * b > 140 ? "#1d1d1f" : "#ffffff";
+}
+
 export default function ShapeNode({ id, data, selected }: NodeProps) {
   const { setNodes, getNode } = useReactFlow();
   const [editing, setEditing] = useState(false);
@@ -125,7 +139,9 @@ export default function ShapeNode({ id, data, selected }: NodeProps) {
   // gap between the two never resolves no matter how many times you "fix"
   // it, since both numbers move together.
   useLayoutEffect(() => {
-    if (editing) return;
+    // Icon shapes never grow with their text: it sits inside the shape (clipped) or
+    // hangs below the box, so there is nothing to measure.
+    if (editing || svgRenderer) return;
     const content = contentRef.current;
     if (!content) return;
     const measure = () => {
@@ -148,7 +164,7 @@ export default function ShapeNode({ id, data, selected }: NodeProps) {
     const observer = new ResizeObserver(measure);
     observer.observe(content);
     return () => observer.disconnect();
-  }, [id, editing, text, textStyle, shape, setNodes, getNode]);
+  }, [id, editing, text, textStyle, shape, svgRenderer, setNodes, getNode]);
 
   const textEditor = editing ? (
     <textarea
@@ -182,9 +198,11 @@ export default function ShapeNode({ id, data, selected }: NodeProps) {
       />
       {locked && <span className="node-lock-badge">🔒</span>}
       {svgRenderer ? (
-        <div className="shape-node shape-node-svg" ref={contentRef}>
+        <div className={`shape-node shape-node-svg${LABEL_BELOW.has(shape) ? " shape-label-below" : ""}`} ref={contentRef}>
           {svgRenderer(color, strokeColor)}
-          <div className="shape-node-svg-label">{textEditor}</div>
+          <div className="shape-node-svg-label" style={LABEL_BELOW.has(shape) ? undefined : { color: inkOn(color) }}>
+            {textEditor}
+          </div>
         </div>
       ) : (
         <div

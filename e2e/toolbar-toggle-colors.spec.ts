@@ -66,3 +66,30 @@ test("the Shapes button keeps its solid color while hovered when the panel is op
   const [r, , b] = await rgbOf(btn);
   expect(b).toBeGreaterThan(r + 60);
 });
+
+test("in dark mode every selected Draw tool is the same colour, at rest and hovered", async ({ diagramPage: page }) => {
+  await page.getByRole("button", { name: "Dark mode" }).click();
+  const group = page.locator(".toolbar-group.group-draw");
+  const look = async (selector: string, hover: boolean) => {
+    const btn = group.locator(selector);
+    await btn.click();
+    await expect(btn).toHaveClass(/active/);
+    if (!hover) await page.mouse.move(5, 5);
+    await page.waitForTimeout(400); // the colour eases in
+    const [r, g, b] = await rgbOf(btn);
+    const text = await btn.evaluate((el) => getComputedStyle(el).color);
+    await btn.click();
+    await expect(btn).not.toHaveClass(/active/);
+    return { r, g, b, text };
+  };
+  for (const hover of [false, true]) {
+    const pencil = await look(".pencil-btn", hover);
+    // Violet, not the old blue: red is above blue's red, and the text is the dark ink.
+    expect(pencil.b).toBeGreaterThan(pencil.r);
+    expect(pencil.r).toBeGreaterThan(90);
+    expect(pencil.text).toBe("rgb(26, 19, 48)");
+    for (const selector of [".eraser-btn", ".select-mode-btn", ".hand-mode-btn", ".text-tool-btn"]) {
+      expect(await look(selector, hover)).toEqual(pencil);
+    }
+  }
+});
